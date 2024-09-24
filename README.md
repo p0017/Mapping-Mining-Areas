@@ -18,6 +18,11 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
    ```
    pip install -r requirements.txt
    ```
+3. Download the ground truth, which is the union of mining polygons by [Maus et al.](https://www.nature.com/articles/s41597-022-01547-4) and [Tang and Werner](https://www.nature.com/articles/s43247-023-00805-6).
+   ```
+   cd data
+   wget https://owncloud.wu.ac.at/index.php/s/QHr5K9w3HN97bJm/download/mining_polygons_combined.gpkg
+   ```
 4. Add your own API_KEY to segmentation_dataset_generation.py and check all paths.
 5. Execute segmentation_dataset_generation.py for all years to create the datasets for training the model and prediction. A training dataset will only be generated for 2019 since the ground truth is based on this year. Prediction datasets will be generated for every year.
    ```
