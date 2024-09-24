@@ -72,14 +72,10 @@ pd.options.mode.chained_assignment = None
 
 parser = ArgumentParser()
 parser.add_argument('-y', '-year', required=True)
-parser.add_argument('-m', '-model', required=True)
-parser.add_argument('-i', '-iter', required=True)
 #Eight options for year, from '2016' up to '2024'
 #If one wants to include more recent data, the corresponding Planet parameter needs to be added to the dict below
 args = parser.parse_args()
 year = args.y
-spec_model = args.m
-spec_iter = args.i
 
 gdf = gpd.read_file("./data/segmentation/mining_polygons_combined.gpkg")
 #Reading the union of two datasets
@@ -218,16 +214,11 @@ gdf_pred['tile_bboxes'] = gdf['tile_bboxes']
 gdf_pred['x_bbox'] = gdf['x_bbox']
 gdf_pred['y_bbox'] = gdf['y_bbox']
 
-model_selection = {
-    'mask2former': 'mask2former_swin-l-in22k-384x384-pre_8xb2-160k_global_combined-512x512',
-    'segformer': 'segformer_mit-b5_8xb2-160k_global_combined-512x512'}
-
 #since we did not use any early stopping technique, we use the training checkpoints with the highest validation scores
 #loading the mmsegmentation config of the model and a training checkpoint for inference
-cfg = Config.fromfile('./mmsegmentation/configs/{}/{}.py'.format(spec_model, model_selection[spec_model]))
-checkpoint = './work_dirs/{}/iter_{}.pth'.format(model_selection[spec_model], spec_iter)
-cfg.load_from = checkpoint
-cfg.work_dir = './work_dirs/{}/'.format(model_selection[spec_model])
+cfg = Config.fromfile('./mmsegmentation/configs/YOUR_MODEL_CONFIG.py')
+cfg.load_from = './work_dirs/YOUR_MODEL_CHECKPOINT'
+cfg.work_dir = './work_dirs/YOUR_MODEL_CHECKPOINT/'
 
 print('loading model from {}'.format(checkpoint))
 

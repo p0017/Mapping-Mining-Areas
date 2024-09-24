@@ -22,6 +22,7 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
    ```
    cd data
    wget https://owncloud.wu.ac.at/index.php/s/QHr5K9w3HN97bJm/download/mining_polygons_combined.gpkg
+   cd ..
    ```
 4. Add your own API_KEY to segmentation_dataset_generation.py and check all paths.
 5. Execute segmentation_dataset_generation.py for all years to create the datasets for training the model and prediction. A training dataset will only be generated for 2019 since the ground truth is based on this year. Prediction datasets will be generated for every year.
