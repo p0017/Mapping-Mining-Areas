@@ -19,14 +19,15 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
    pip install -r requirements.txt
    ```
 4. Add your own API_KEY to segmentation_dataset_generation.py and check all paths.
-5. Execute segmentation_dataset_generation.py for all years to create the datasets for training the model and prediction.
+5. Execute segmentation_dataset_generation.py for all years to create the datasets for training the model and prediction. A training dataset will only be generated for 2019 since the ground truth is based on this year. Prediction datasets will be generated for every year.
    ```
    for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
      python3 segmentation_dataset_generation.py -year=$year &
    done
    ```
-7. Download and install [MMSegmentation](https://mmsegmentation.readthedocs.io/en/main/get_started.html).
-8. Train your own segmentation model on the 2019 dataset which you just generated using MMSegmentation according to the [instructions](https://mmsegmentation.readthedocs.io/en/main/user_guides/index.html).
+6. Download and install [MMSegmentation](https://mmsegmentation.readthedocs.io/en/main/get_started.html).
+7. Follow the [instructions](https://mmsegmentation.readthedocs.io/en/main/advanced_guides/add_datasets.html) of MMSegmentation to add the 2019 mining dataset which you just generated to the training datasets.
+8. Follow the [instructions](https://mmsegmentation.readthedocs.io/en/main/user_guides/4_train_test.html) of MMSegmentation to train an existing model of your choice on the 2019 mining dataset.
 9. Add the path of your trained model to gpkg_dataset_generation.py and check all other paths.
 10. Execute gpkg_dataset_generation.py for all years to get the gpkg datasets containing the predictions.
     ```
