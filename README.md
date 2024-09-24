@@ -8,6 +8,12 @@ In this paper, we present a novel panel dataset of mining areas in the tropical 
 The resulting dataset features improved accuracy and reduced noise from human errors, and can readily be extended to cover new locations and points in time as they become available.
 Our comprehensive dataset of mining areas can be used to assess local environmental, social, and economic impacts of mining activity in regions where conventional data is not available or incomplete.
 
+<p float="center">
+  <img src="resources/toka_mine.PNG" width="333" />
+  <img src="resources/toka_mine_prob.PNG" width="333" /> 
+  <img src="resources/toka_mine_pred.PNG" width="333" />
+</p>
+
 ## Getting started
 1. Clone the repository.
    ```
