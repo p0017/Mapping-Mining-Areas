@@ -358,5 +358,5 @@ cluster_to_save.drop('expid', axis=1, inplace=True)
 cluster_to_save.drop('exparea', axis=1, inplace=True)
 cluster_to_save.drop('clusterid', axis=1, inplace=True)
 
-cluster_to_save.to_file("./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_{}_{}.gpkg".format(year, year, spec_model, spec_iter), driver='GPKG')
+cluster_to_save.to_file("./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}.gpkg".format(year, year), driver='GPKG')
 print(year, 'done')
