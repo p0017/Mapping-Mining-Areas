@@ -44,7 +44,7 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
 10. Execute gpkg_dataset_generation.py for all years to get the gpkg datasets containing the predictions.
     ```
     for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
-     python3 gpkg_dataset_generation.py -year=$year -model='YOUR_MODEL' -iter='ITERATION_OF_YOUR_MODEL' &
+     python3 gpkg_dataset_generation.py -year=$year &
     done
     ```
 11. Postprocess your predictions.
