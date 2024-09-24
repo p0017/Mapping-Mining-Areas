@@ -47,7 +47,11 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
      python3 gpkg_dataset_generation.py -year=$year -model='YOUR_MODEL' -iter='ITERATION_OF_YOUR_MODEL' &
     done
     ```
-11. Redeem your predictions.
+11. Postprocess your predictions.
     ```
+    python3 gpkg_dataset_postprocessing.py
+    ```
+12. Redeem your postprocessed predictions.
+     ```
     cd segmentation/data/segmentation/YOUR_YEAR/gpkg/
     ```
