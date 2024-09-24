@@ -40,8 +40,8 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
 6. Download and install [MMSegmentation](https://mmsegmentation.readthedocs.io/en/main/get_started.html).
 7. Follow the [instructions](https://mmsegmentation.readthedocs.io/en/main/advanced_guides/add_datasets.html) of MMSegmentation to add the 2019 mining dataset which you just generated to the training datasets.
 8. Follow the [instructions](https://mmsegmentation.readthedocs.io/en/main/user_guides/4_train_test.html) of MMSegmentation to train an existing model of your choice on the 2019 mining dataset.
-9. Add the path of your trained model to gpkg_dataset_generation.py and check all other paths.
-10. Execute gpkg_dataset_generation.py for all years to get the gpkg datasets containing the predictions. If another .gpkg polygon dataset is used, its path must be added.
+9. Add the path of your trained model to gpkg_dataset_generation.py and check all other paths. If another .gpkg polygon dataset is used, its path must be added.
+10. Execute gpkg_dataset_generation.py for all years to get the gpkg datasets containing the predictions.
     ```
     for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
      python3 gpkg_dataset_generation.py -year=$year -model='YOUR_MODEL' -iter='ITERATION_OF_YOUR_MODEL' &
