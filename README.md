@@ -9,9 +9,9 @@ The resulting dataset features improved accuracy and reduced noise from human er
 Our comprehensive dataset of mining areas can be used to assess local environmental, social, and economic impacts of mining activity in regions where conventional data is not available or incomplete.
 
 <p float="center">
-  <img src="resources/toka_mine.PNG" width="300" />
-  <img src="resources/toka_mine_prob.PNG" width="300" /> 
-  <img src="resources/toka_mine_pred.PNG" width="300" />
+  <img src="resources/toka_mine.PNG" width="200" />
+  <img src="resources/toka_mine_prob.PNG" width="200" /> 
+  <img src="resources/toka_mine_pred.PNG" width="200" />
 </p>
 
 ## Getting started
