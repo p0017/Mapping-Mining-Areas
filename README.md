@@ -24,13 +24,13 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
    ```
    pip install -r requirements.txt
    ```
-3. Download the ground truth, which is the union of mining polygons by [Maus et al.](https://www.nature.com/articles/s41597-022-01547-4) and [Tang and Werner](https://www.nature.com/articles/s43247-023-00805-6).
+3. Download the ground truth, which is the union of mining polygons by [Maus et al.](https://www.nature.com/articles/s41597-022-01547-4) and [Tang and Werner](https://www.nature.com/articles/s43247-023-00805-6). Any other .gpkg polygon dataset can also be used if it is at least partially covered by Planet NICFI.
    ```
    cd data
    wget https://owncloud.wu.ac.at/index.php/s/QHr5K9w3HN97bJm/download/mining_polygons_combined.gpkg
    cd ..
    ```
-4. Add your own API_KEY to segmentation_dataset_generation.py and check all paths.
+4. Add your own [Planet NICFI](https://www.planet.com/nicfi/) API_KEY to segmentation_dataset_generation.py and check all paths. If another .gpkg polygon dataset is used, its path must be added.
 5. Execute segmentation_dataset_generation.py for all years to create the datasets for training the model and prediction. A training dataset will only be generated for 2019 since the ground truth is based on this year. Prediction datasets will be generated for every year.
    ```
    for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
@@ -41,7 +41,7 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
 7. Follow the [instructions](https://mmsegmentation.readthedocs.io/en/main/advanced_guides/add_datasets.html) of MMSegmentation to add the 2019 mining dataset which you just generated to the training datasets.
 8. Follow the [instructions](https://mmsegmentation.readthedocs.io/en/main/user_guides/4_train_test.html) of MMSegmentation to train an existing model of your choice on the 2019 mining dataset.
 9. Add the path of your trained model to gpkg_dataset_generation.py and check all other paths.
-10. Execute gpkg_dataset_generation.py for all years to get the gpkg datasets containing the predictions.
+10. Execute gpkg_dataset_generation.py for all years to get the gpkg datasets containing the predictions. If another .gpkg polygon dataset is used, its path must be added.
     ```
     for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
      python3 gpkg_dataset_generation.py -year=$year -model='YOUR_MODEL' -iter='ITERATION_OF_YOUR_MODEL' &
