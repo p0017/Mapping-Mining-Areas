@@ -22,7 +22,8 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
    ```
 2. Install the required Python packages.
    ```
-   pip install -r requirements.txt
+   conda config --append channels conda-forge
+   conda install --yes --file requirements.txt
    ```
 3. Download the ground truth, which is the union of mining polygons by [Maus et al.](https://www.nature.com/articles/s41597-022-01547-4) and [Tang and Werner](https://www.nature.com/articles/s43247-023-00805-6). Any other .gpkg polygon dataset can also be used if it is at least partially covered by Planet NICFI.
    ```
