@@ -89,3 +89,9 @@ Replace `YOUR_YEAR` with the requested year, and navigate to the directory conta
   ```bash
     cd segmentation/data/segmentation/YOUR_YEAR/gpkg/
    ```
+
+---
+
+## Author
+This repository was developed by [Philipp Sepin](https://github.com/p0017).
+For any inquiries, please contact: [philipp.sepin@wu.ac.at](mailto:philipp.sepin@wu.ac.at).
