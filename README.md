@@ -27,11 +27,11 @@ Our comprehensive dataset of mining areas can be used to assess local environmen
    cd Mapping-Mining-Areas
    ```
 
-### 2. Install the required Python packages.
-Ensure that you have the necessary channels configured.
+### 2. Install the required packages.
+Do so by setting up a *conda* environment.
    ```bash
-   conda config --append channels conda-forge
-   conda install --yes --file requirements.txt
+   conda env create -f environment.yml
+   conda activate mapping
    ```
 
 ### 3. Download the Ground Truth Data
