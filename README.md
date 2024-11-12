@@ -80,7 +80,7 @@ Run the postprocessing script to refine predictions. This is executed on the CPU
   ```
   
 ### 12. Redeem your Predictions.
-Navigate to the directory containing your postprocessed predictions.
+Replace `YOUR_YEAR` with the requested year, and navigate to the directory containing your postprocessed predictions.
   ```bash
     cd segmentation/data/segmentation/YOUR_YEAR/gpkg/
    ```
