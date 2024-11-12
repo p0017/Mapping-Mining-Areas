@@ -2,6 +2,17 @@
 
 This repository provides instructions for creating a panel dataset of tropical mining areas, using state-of-the-art semantic segmentation techniques as employed in our study.
 
+<p float="center">
+  <img src="resources/toka_mine.PNG" width="250" />
+  <img src="resources/toka_mine_prob.PNG" width="250" /> 
+  <img src="resources/toka_mine_pred.PNG" width="250" />
+</p>
+
+*Toka Tindung* mine, one of the largest gold mines in Southeast Asia (Indonesia).
+- *Left*: Ground truth of the mining area in 2019.
+- *Center*: Model output showing the probability of mining presence.
+- *Right*: Predicted mining area for 2020.
+
 ---
 
 ## Abstract
@@ -11,12 +22,6 @@ In this paper, we present a novel panel dataset of mining areas in the tropical 
 
 The resulting dataset features improved accuracy and reduced noise from human errors, and can readily be extended to cover new locations and points in time as they become available.
 Our comprehensive dataset of mining areas can be used to assess local environmental, social, and economic impacts of mining activity in regions where conventional data is not available or incomplete.
-
-<p float="center">
-  <img src="resources/toka_mine.PNG" width="250" />
-  <img src="resources/toka_mine_prob.PNG" width="250" /> 
-  <img src="resources/toka_mine_pred.PNG" width="250" />
-</p>
 
 ---
 
