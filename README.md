@@ -70,7 +70,7 @@ An *NVIDIA* GPU with *CUDA* support is essential for efficient processing and mo
 Train your selected model on the 2019 mining dataset using *MMSegmentation* by following these [instructions](https://mmsegmentation.readthedocs.io/en/main/user_guides/4_train_test.html). Training ideally requires two or more high-performance *NVIDIA* GPUs, and even with two GPUs, may take one to two days depending on the model complexity and dataset size. If only a single, outdated *NVIDIA* GPU is available, opt for a smaller model with fewer parameters, though this will likely affect model accuracy.
 
 ### 10. Generate Predicted Polygon Datasets
-Add the path to your trained model in `gpkg_dataset_generation.py` and confirm all file paths. Only a single high-performance *NVIDIA* GPU is required for prediction. Predicting for all years may take one to two days, depending on the chosen model and dataset size.
+Add the path to your trained model checkpoint in `gpkg_dataset_generation.py` and confirm all file paths. Only a single high-performance *NVIDIA* GPU is required for prediction. Predicting for all years may take one to two days, depending on the chosen model and dataset size.
    ```bash
    for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
     python3 gpkg_dataset_generation.py -year=$year &
@@ -97,6 +97,4 @@ The authors gratefully acknowledge financial support from the Austrian National 
 ---
 
 ## Author
-This repository was developed by [Philipp Sepin](https://github.com/p0017).  
-For any inquiries, please contact: [philipp.sepin@wu.ac.at](mailto:philipp.sepin@wu.ac.at).
-```
+This repository was developed by [Philipp Sepin](https://github.com/p0017). For any inquiries, please contact: [philipp.sepin@wu.ac.at](mailto:philipp.sepin@wu.ac.at).
