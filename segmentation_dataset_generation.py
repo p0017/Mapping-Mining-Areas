@@ -64,13 +64,24 @@ from utils import get_bbox, global_to_local_coords, check_if_inside_bbox, replac
 pd.options.mode.chained_assignment = None
 
 parser = ArgumentParser()
-parser.add_argument('-y', '-year', required=True)
+parser.add_argument('-y', '--year', required=True, help="Year to process.")
+parser.add_argument('-d', '--demo',  action='store_true', help="Set this flag to run the script in demo mode.")
+
 #Eight options for year, from '2016' up to '2024'
-#If one wants to include more recent data, the corresponding Planet parameter needs to be added to the dict below
+#If one wants to include data of more recent years, the corresponding Planet parameter needs to be added to the nicfi_urls dict below
+
 args = parser.parse_args()
 year = args.y
+demo = args.d
 
-gdf = gpd.read_file("./data/segmentation/mining_polygons_combined.gpkg")
+if demo:
+    print("Running in demo mode.")
+    gdf = gpd.read_file("./data/segmentation/mining_polygons_combined_demo.gpkg")
+    
+else:
+    print("Running in regular mode.")
+    gdf = gpd.read_file("./data/segmentation/mining_polygons_combined.gpkg")
+
 #Reading the union of two datasets
 #We are using the union since they intersect a lot
 #Maus, Victor, et al. "An update on global mining land use." Scientific data 9.1 (2022): 1-11.
@@ -387,4 +398,9 @@ gdf_val.reset_index(drop=True, inplace=True)
 prepare_and_save(gdf_train, set_type='train')
 prepare_and_save(gdf_test, set_type='test')
 prepare_and_save(gdf_val, set_type='val')
-print(year, 'done')
+
+if demo:
+    print(year, 'demo done.')
+    
+else:
+    print(year, 'done')

@@ -71,13 +71,24 @@ from utils import get_bbox, count_tiles, global_to_local_coords, isnan, postproc
 pd.options.mode.chained_assignment = None
 
 parser = ArgumentParser()
-parser.add_argument('-y', '-year', required=True)
+parser.add_argument('-y', '--year', required=True, help="Year to process.")
+parser.add_argument('-d', '--demo',  action='store_true', help="Set this flag to run the script in demo mode.")
+
 #Eight options for year, from '2016' up to '2024'
-#If one wants to include more recent data, the corresponding Planet parameter needs to be added to the dict below
+#If one wants to include data of more recent years, the corresponding Planet parameter needs to be added to the nicfi_urls dict below
+
 args = parser.parse_args()
 year = args.y
+demo = args.d
 
-gdf = gpd.read_file("./data/segmentation/mining_polygons_combined.gpkg")
+if demo:
+    print("Running in demo mode.")
+    gdf = gpd.read_file("./data/segmentation/mining_polygons_combined_demo.gpkg")
+    
+else:
+    print("Running in regular mode.")
+    gdf = gpd.read_file("./data/segmentation/mining_polygons_combined.gpkg")
+
 #Reading the union of two datasets
 #We are using the union since they intersect a lot
 #Maus, Victor, et al. "An update on global mining land use." Scientific data 9.1 (2022): 1-11.
@@ -216,9 +227,11 @@ gdf_pred['y_bbox'] = gdf['y_bbox']
 
 #since we did not use any early stopping technique, we use the training checkpoints with the highest validation scores
 #loading the mmsegmentation config of the model and a training checkpoint for inference
+#add your model config and checkpoint path here
 cfg = Config.fromfile('./mmsegmentation/configs/YOUR_MODEL_CONFIG.py')
-cfg.load_from = './work_dirs/YOUR_MODEL_CHECKPOINT'
-cfg.work_dir = './work_dirs/YOUR_MODEL_CHECKPOINT/'
+checkpoint = './work_dirs/YOUR_MODEL_CHECKPOINT'
+cfg.load_from = checkpoint
+cfg.work_dir = checkpoint + '/'
 
 print('loading model from {}'.format(checkpoint))
 
@@ -324,7 +337,7 @@ for split in ['train/', 'test/', 'val/']:
 
 #invalid Planet API responses can occur
 invalid_geom = [False if geometry == None else True for geometry in gdf_pred['geometry']]
-print('No geometry found for {} out of {} polygons'.format(str(invalid_geom.count(False)), str(len(gdf_pred))))
+print('No geometry found for {} out of {} polygons.'.format(str(invalid_geom.count(False)), str(len(gdf_pred))))
 gdf = gdf[invalid_geom]
 gdf.reset_index(drop=True, inplace=True)
 
@@ -359,4 +372,9 @@ cluster_to_save.drop('exparea', axis=1, inplace=True)
 cluster_to_save.drop('clusterid', axis=1, inplace=True)
 
 cluster_to_save.to_file("./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}.gpkg".format(year, year), driver='GPKG')
-print(year, 'done')
+
+if demo:
+    print(year, 'demo done.')
+    
+else:
+    print(year, 'done.')
