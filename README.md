@@ -39,23 +39,43 @@ Set up a *conda* environment.
    ```
 
 ### 3. Download the Ground Truth Data
-The ground truth dataset combines mining polygons from [*Maus et al.*](https://www.nature.com/articles/s41597-022-01547-4) and [*Tang and Werner*](https://www.nature.com/articles/s43247-023-00805-6). You may also use any other `.gpkg` polygon dataset partially covered by *Planet NICFI*.
+The ground truth dataset combines mining polygons from [*Maus et al.*](https://www.nature.com/articles/s41597-022-01547-4) and [*Tang and Werner*](https://www.nature.com/articles/s43247-023-00805-6). 
+
    ```bash
    cd data
    wget https://owncloud.wu.ac.at/index.php/s/QHr5K9w3HN97bJm/download/mining_polygons_combined.gpkg
    cd ..
    ```
 
+**Note:** You may also use any other `.gpkg` polygon dataset partially covered by *Planet NICFI*. If you plan on also using it for model training, make sure the dataset is large enough.
+
 ### 4. Set Up API Access
 Add your own [*Planet NICFI*](https://www.planet.com/nicfi/) `API_KEY` to `segmentation_dataset_generation.py` and verify all file paths. If you are using a different `.gpkg` polygon dataset, ensure the file path is updated.
 
 ### 5. Generate Segmentation Datasets
-Create image datasets for training and prediction by running the following command for each year. Only the 2019 dataset will be used for training, with segmentation masks generated exclusively for this year, while prediction datasets are created for all years. This process runs on the CPU and may take one to two days with the full `.gpkg` dataset. Smaller `.gpkg` datasets will process faster.
+Generate image datasets for training and prediction by running the following command for each year. The 2019 dataset will be used for training, with segmentation masks created exclusively for this year, while prediction datasets are generated for all years.
+
+Choose between:
+- **Regular Mode**: Processes the complete ground truth `.gpkg` dataset. This can take one to two days.
+- **Demo Mode**: Processes a smaller demo dataset that is 1/80th of the full dataset, completing much faster. Demo mode is useful for testing and debugging.
+
+#### Command for Regular Mode
+To run in regular mode with the complete dataset, use:
    ```bash
    for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
-     python3 segmentation_dataset_generation.py -year=$year &
+     python3 segmentation_dataset_generation.py --year=$year &
    done
    ```
+
+#### Command for Demo Mode
+To run in demo mode with the smaller demo dataset, use the `--demo` flag:
+   ```bash
+   for year in '2016' '2019' '2024'; do
+     python3 segmentation_dataset_generation.py --year=$year --demo &
+   done
+   ```
+
+**Note:** For quick testing, you may also choose to run a subset of sample years, as done here, but should include 2019 since it is required for training.
 
 ### 6. Install *MMSegmentation*
 Follow the installation guide for [*MMSegmentation*](https://mmsegmentation.readthedocs.io/en/main/get_started.html).
@@ -64,16 +84,37 @@ Follow the installation guide for [*MMSegmentation*](https://mmsegmentation.read
 Add the 2019 mining dataset you generated to the *MMSegmentation* training datasets as per these [instructions](https://mmsegmentation.readthedocs.io/en/main/advanced_guides/add_datasets.html).
 
 ### 8. Install *NVIDIA CUDA*
-An *NVIDIA* GPU with *CUDA* support is essential for efficient processing and model training. Training ideally requires two or more high-performance *NVIDIA* GPUs, though a single GPU is sufficient for predictions. If only an outdated GPU is available, it may still be possible to achieve results by using a smaller segmentation model, though accuracy may be reduced. To install *CUDA*, follow the instructions [here](https://docs.NVIDIA.com/cuda/cuda-installation-guide-linux/).
+An *NVIDIA* GPU with *CUDA* support is essential for efficient processing and model training. Training ideally requires two or more high-performance *NVIDIA* GPUs, though a single GPU is sufficient for predictions. To install *CUDA*, follow the instructions [here](https://docs.NVIDIA.com/cuda/cuda-installation-guide-linux/).
+
+**Note:** If only an outdated GPU is available, it may still be possible to achieve results by using a smaller segmentation model, though predictions may be worse.
 
 ### 9. Train the Model
-Train your selected model on the 2019 mining dataset using *MMSegmentation* by following these [instructions](https://mmsegmentation.readthedocs.io/en/main/user_guides/4_train_test.html). Training ideally requires two or more high-performance *NVIDIA* GPUs, and even with two GPUs, may take one to two days depending on the model complexity and dataset size. If only a single, outdated *NVIDIA* GPU is available, opt for a smaller model with fewer parameters, though this will likely affect model accuracy.
+Train your selected model on the 2019 mining dataset using *MMSegmentation* by following these [instructions](https://mmsegmentation.readthedocs.io/en/main/user_guides/4_train_test.html). Training ideally requires two or more high-performance *NVIDIA* GPUs, and even with two GPUs, may take one to two days depending on the model complexity and dataset size. 
+
+**Note:** If only a single, outdated *NVIDIA* GPU is available, opt for a smaller model with fewer parameters, though predictions may be worse.
+
+**Note:** When using only the demo dataset for training, expect significantly worse predictions, as the demo dataset is too small for effective model training.
 
 ### 10. Generate Predicted Polygon Datasets
-Add the path to your trained model in `gpkg_dataset_generation.py` and confirm all file paths. Only a single high-performance *NVIDIA* GPU is required for prediction. Predicting for all years may take one to two days, depending on the chosen model and dataset size.
+Add the path to your trained model checkpoint in `gpkg_dataset_generation.py` and confirm all file paths. Only a single high-performance *NVIDIA* GPU is required for prediction.
+
+Choose between:
+- **Regular Mode**: Predicts on the complete ground truth `.gpkg` dataset. This can take one to two days, depending on the chosen model and dataset size.
+- **Demo Mode**:  Predicts on a smaller demo dataset that is 1/80th of the full dataset, completing much faster. Demo mode is useful for testing and debugging.
+
+#### Command for Regular Mode
+To run in regular mode with the complete dataset, use:
    ```bash
    for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
-    python3 gpkg_dataset_generation.py -year=$year &
+     python3 gpkg_dataset_generation.py --year=$year &
+   done
+   ```
+
+#### Command for Demo Mode
+To run in demo mode with the smaller demo dataset, use the `--demo` flag:
+   ```bash
+   for year in '2016' '2019' '2024'; do
+     python3 gpkg_dataset_generation.py --year=$year --demo &
    done
    ```
 
@@ -97,6 +138,4 @@ The authors gratefully acknowledge financial support from the Austrian National 
 ---
 
 ## Author
-This repository was developed by [Philipp Sepin](https://github.com/p0017).  
-For any inquiries, please contact: [philipp.sepin@wu.ac.at](mailto:philipp.sepin@wu.ac.at).
-```
+This repository was developed by [Philipp Sepin](https://github.com/p0017). For any inquiries, please contact: [philipp.sepin@wu.ac.at](mailto:philipp.sepin@wu.ac.at).
