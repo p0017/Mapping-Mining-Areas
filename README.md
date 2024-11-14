@@ -35,25 +35,25 @@ The resulting dataset features improved accuracy and reduced noise from human er
 Set up a *conda* environment.
    ```bash
    conda env create -f environment.yml
-   conda activate mapping
+   conda activate mining
    ```
 
 ### 3. Download the Ground Truth Data
 The ground truth dataset combines mining polygons from [*Maus et al.*](https://www.nature.com/articles/s41597-022-01547-4) and [*Tang and Werner*](https://www.nature.com/articles/s43247-023-00805-6). 
 
    ```bash
-   cd data
+   cd data/segmentation/
    wget https://owncloud.wu.ac.at/index.php/s/QHr5K9w3HN97bJm/download/mining_polygons_combined.gpkg
-   cd ..
+   cd ../../
    ```
 
 **Note:** You may also use any other `.gpkg` polygon dataset partially covered by *Planet NICFI*. If you plan on also using it for model training, make sure the dataset is large enough.
 
 ### 4. Set Up API Access
-Add your own [*Planet NICFI*](https://www.planet.com/nicfi/) `API_KEY` to `segmentation_dataset_generation.py` and verify all file paths. If you are using a different `.gpkg` polygon dataset, ensure the file path is updated.
+Add your own [*Planet NICFI*](https://www.planet.com/nicfi/) API key to `segmentation_dataset_generation.py` and verify all file paths. If you are using a different `.gpkg` polygon dataset, ensure the file path is updated.
 
 ### 5. Generate Segmentation Datasets
-Generate image datasets for training and prediction by running the following command for each year. The 2019 dataset will be used for training, with segmentation masks created exclusively for this year, while prediction datasets are generated for all years.
+Generate image datasets for training and prediction by running the following command for each year. The 2019 dataset will be used for training, with segmentation masks created exclusively for this year, while images for prediction are generated for all years. These image and segmentation mask datasets can be found at `/data/segmentation/YOUR_YEAR/img_dir/` and `/data/segmentation/2019/ann_dir/` respectively.
 
 Choose between:
 - **Regular Mode**: Processes the complete ground truth `.gpkg` dataset. This can take one to two days.
@@ -96,7 +96,7 @@ Train your selected model on the 2019 mining dataset using *MMSegmentation* by f
 **Note:** When using only the demo dataset for training, expect significantly worse predictions, as the demo dataset is too small for effective model training.
 
 ### 10. Generate Predicted Polygon Datasets
-Add the path to your trained model checkpoint in `gpkg_dataset_generation.py` and confirm all file paths. Only a single high-performance *NVIDIA* GPU is required for prediction.
+Add the path to your trained model checkpoint in `gpkg_dataset_generation.py` and confirm all file paths. Only a single high-performance *NVIDIA* GPU is required for prediction. This script will output a `.gpkg` dataset for each requested year, containing the predicted polygons.
 
 Choose between:
 - **Regular Mode**: Predicts on the complete ground truth `.gpkg` dataset. This can take one to two days, depending on the chosen model and dataset size.
