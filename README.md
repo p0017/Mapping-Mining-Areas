@@ -32,7 +32,7 @@ The resulting dataset features improved accuracy and reduced noise from human er
    ```
 
 ### 2. Install Required Packages
-Set up a *conda* environment.
+Set up a *conda* environment. This can take a minute.
    ```bash
    conda env create -f environment.yml
    conda activate mining
