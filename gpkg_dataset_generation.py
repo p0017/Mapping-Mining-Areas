@@ -78,8 +78,8 @@ parser.add_argument('-d', '--demo',  action='store_true', help="Set this flag to
 #If one wants to include data of more recent years, the corresponding Planet parameter needs to be added to the nicfi_urls dict below
 
 args = parser.parse_args()
-year = args.y
-demo = args.d
+year = args.year
+demo = args.demo
 
 if demo:
     print("Running in demo mode.")
