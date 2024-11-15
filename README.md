@@ -50,7 +50,7 @@ The ground truth dataset combines mining polygons from [*Maus et al.*](https://w
 **Note:** You may also use any other `.gpkg` polygon dataset partially covered by *Planet NICFI*. If you plan on also using it for model training, make sure the dataset is large enough.
 
 ### 4. Set Up API Access
-Add your own [*Planet NICFI*](https://www.planet.com/nicfi/) API key to `segmentation_dataset_generation.py` and verify all file paths. If you are using a different `.gpkg` polygon dataset, ensure the file path is updated.
+Add your own [*Planet NICFI*](https://www.planet.com/nicfi/) API key to `segmentation_dataset_generation.py` and `gpkg_dataset_generation.py` and verify all file paths. If you are using a different `.gpkg` polygon dataset, ensure the file path is updated.
 
 ### 5. Generate Segmentation Datasets
 Generate image datasets for training and prediction by running the following command for each year. The 2019 dataset will be used for training, with segmentation masks created exclusively for this year, while images for prediction are generated for all years. These image and segmentation mask datasets can be found at `/data/segmentation/YOUR_YEAR/img_dir/` and `/data/segmentation/2019/ann_dir/` respectively.
