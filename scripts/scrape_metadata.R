@@ -72,7 +72,7 @@ request_quad <- function(query, id_basemap) {
   # Check the status code
   status <- httr::status_code(response)
   if(status < 100 || status > 300) {
-    warning("Received status code ", status, " when requesting quads for bbox '", 
+    stop("Received status code ", status, " when requesting quads for bbox '", 
       query[["bbox"]], "' and basemap '",  id_basemap, "'.")
   }
   content <- httr::content(response)
@@ -100,7 +100,7 @@ request_scenes <- function(query, id_basemap, id_quad) {
   # Check the status code
   status <- httr::status_code(response)
   if(status < 100 || status > 300) {
-    warning("Received status code ", status, " when requesting scenes for quad '",
+    stop("Received status code ", status, " when requesting scenes for quad '",
       id_quad, "', bbox '", query[["bbox"]], "', and basemap '",  id_basemap, "'.")
   }
   
@@ -108,7 +108,7 @@ request_scenes <- function(query, id_basemap, id_quad) {
   # Pull the scene IDs
   vapply(content[["items"]], \(item) { # We need values from 'response > items > link'
     out <- gsub(".*\\/items\\/([^#]*)#.*", "\\1", item[["link"]])
-    if(!grepl("[0-9]{8}_[0-9]{2,6}_[0-9]{2}_[0-9a-f]{4}", out)) {
+    if(!grepl("[0-9]{8}_[0-9]{2,6}_[0-9]{2,6}_[0-9a-f]{4}", out)) {
       message("Scene ID '", out, "' for the quad '", id_quad, "' at bbox '", query[["bbox"]], 
         "' and basemap '", id_basemap, "' does not match the expected pattern.")
     }
@@ -147,7 +147,7 @@ get_metadata <- function(id_scene, geometry = TRUE) {
   )
   status <- httr::status_code(response)
   if(status < 100 || status > 300) {
-    warning("Received status code ", status, " when requesting scene '", id_scene, "'.")
+    stop("Received status code ", status, " when requesting scene '", id_scene, "'.")
   }
   content <- httr::content(response)
   # Pull the metadata and geometry into one table
@@ -174,55 +174,57 @@ shape <- st_read("data/segmentation/global_mining_polygons_v2.gpkg") |>
 # Add an ID to make rows identifiable
 shape[["id"]] <- paste0(shape[["ISO3_CODE"]], formatC(seq_len(NROW(shape)), width = 5, flag = 0))
 # Slot for the basemap, quad, and scene IDs
-shape[["ids"]] <- vector("list", NROW(shape))
+ids <- vector("list", NROW(shape))
 
 # Pull all relevant IDs ---
 for(i in seq_len(NROW(shape))) {
-  shape[["ids"]][[i]] <- shape[i, ] |> st_bbox() |> get_ids()
+  ids[[i]] <- tryCatch({shape[i, ] |> st_bbox() |> get_ids()}, error = \(e) {
+    warning("Error retrieving IDs for '", shape[["id"]][[i]], "'.")
+    return(NA_real_)
+  })
 }
-saveRDS(shape, "data/segmentation/global_mining_polygons_v2_with_IDs.gpkg")
+saveRDS(ids, "data/segmentation/global_mining_polygons_v2_ids.gpkg")
 
 
 # Obtain metadata using the IDs ---
 
-shape[["metadata"]] <- vector("list", NROW(shape))
-shape[["metasummary"]] <- vector("list", NROW(shape))
+meta_dt <- meta_sm <- vector("list", NROW(shape))
 
 for(i in seq_len(NROW(shape))) {
   
   # Merge in the information on basemaps
-  ids <- data.frame(
-    id_scene = unlist(shape[["ids"]][[i]]),
-    unlist(shape[["ids"]][[i]]) |> names() |> 
+  id_df <- data.frame(
+    id_scene = unlist(ids[[i]]),
+    unlist(ids[[i]]) |> names() |> 
       strsplit("\\.") |> sapply(\(names) names) |> t(),
     row.names = NULL
   ) |> dplyr::rename(year = X1, basemap = X2, id_quad = X3)
 
   # We can request up to 250 at a time (scene IDs can appear in multiple quads)
-  id_chunks <- ids[["id_scene"]] |> 
+  id_chunks <- id_df[["id_scene"]] |> 
     unique() |> 
-    split(ceiling(seq_along(unique(ids[["id_scene"]])) / 250))
+    split(ceiling(seq_along(unique(id_df[["id_scene"]])) / 250))
   metadata <- lapply(id_chunks, \(chunk) {
-    tryCatch({get_metadata(chunk, geometry = FALSE)}, error = function(e) {
-      warning("Error processing chunk: ", e$message)
-      return(NULL)
+    tryCatch({get_metadata(chunk, geometry = FALSE)}, error = \(e) {
+      warning("Error processing chunk:\n", e$message)
+      return(data.frame(id_scene = chunk)) # The rest will be NA
     })
   }) |> dplyr::bind_rows()
-  metadata <- dplyr::left_join(ids, metadata, by = "id_scene")
+  metadata <- dplyr::left_join(id_df, metadata, by = "id_scene")
   
   # Some IDs do not seem to work via this API ---
-  if(any(!ids[["id_scene"]] %in% metadata$id_scene)) {
-    skipped <- ids[["id_scene"]][!ids[["id_scene"]] %in% metadata$id_scene]
+  if(any(!id_df[["id_scene"]] %in% metadata$id_scene)) {
+    skipped <- id_df[["id_scene"]][!id_df[["id_scene"]] %in% metadata$id_scene]
     warning("No information found for ", length(skipped), " scenes:\n\t",
       paste0("'", skipped, "'", collapse = "\n\t"))
   }
 
-  shape[["metadata"]][[i]] <- metadata
+  meta_dt[[i]] <- metadata
  
   # We need to:
   #   1) Compute summary statistics per basemap
   #   2) Choose the optimal basemap (month) where appropriate
-  shape[["metasummary"]][[i]] <- metadata |>
+  meta_sm[[i]] <- metadata |>
     dplyr::group_by(year, basemap) |>
     dplyr::summarise( # Summary statistics
       id = shape[["id"]][i], # Explicit, to help match to the shape
@@ -238,7 +240,8 @@ for(i in seq_len(NROW(shape))) {
     ) |> dplyr::group_by(year) |> 
     dplyr::slice_min(cloud_avg, n = 1) # We only keep the best basemap per year
 }
-saveRDS(shape, "data/segmentation/global_mining_polygons_v2_with_IDs+meta.gpkg")
+saveRDS(meta_dt, "data/segmentation/global_mining_polygons_v2_metadata.gpkg")
+saveRDS(meta_sm, "data/segmentation/global_mining_polygons_v2_meta-sm.gpkg")
 
 # The quad download links are stored, but they always seem to follow from basemap and quad ID:
 # https://link.planet.com/basemaps/v1/mosaics/34ead9f8-c7af-4daf-a266-e514251eeea7/quads/708-1052/full?api_key=
@@ -251,11 +254,11 @@ saveRDS(shape, "data/segmentation/global_mining_polygons_v2_with_IDs+meta.gpkg")
 # # Add them
 # ids <- dplyr::left_join(ids, links, by = "id_quad")
 
-#
-meta_sm <- shape[["metasummary"]] |> dplyr::bind_rows()
-meta_df <- shape[["metadata"]] |> dplyr::bind_rows()
+# Use them
+meta_sm_df <- meta_sm |> dplyr::bind_rows()
+meta_dt_df <- meta_dt |> dplyr::bind_rows()
 
 op <- par(mfrow = c(1, 2))
-hist(meta_df[["cloud_cover"]], main = "all scenes")
-hist(meta_sm[["cloud_avg"]], main = "| best month per quad")
+hist(meta_dt_df[["cloud_cover"]], main = "all scenes")
+hist(meta_sm_df[["cloud_avg"]], main = "| best month per quad")
 par(op)
