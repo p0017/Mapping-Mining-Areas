@@ -108,8 +108,8 @@ request_scenes <- function(query, id_basemap, id_quad) {
   # Pull the scene IDs
   vapply(content[["items"]], \(item) { # We need values from 'response > items > link'
     out <- gsub(".*\\/items\\/([^#]*)#.*", "\\1", item[["link"]])
-    if(!grepl("[0-9]{8}_[0-9]{6}_[0-9]{2}_[0-9a-f]{4}", out)) {
-      warning("Scene ID '", out, "' for the quad '", id_quad, "' at bbox '", query[["bbox"]], 
+    if(!grepl("[0-9]{8}_[0-9]{2,6}_[0-9]{2}_[0-9a-f]{4}", out)) {
+      message("Scene ID '", out, "' for the quad '", id_quad, "' at bbox '", query[["bbox"]], 
         "' and basemap '", id_basemap, "' does not match the expected pattern.")
     }
     out
@@ -185,7 +185,8 @@ saveRDS(shape, "data/segmentation/global_mining_polygons_v2_with_IDs.gpkg")
 
 # Obtain metadata using the IDs ---
 
-shape[["meta"]] <- vector("list", NROW(shape))
+shape[["metadata"]] <- vector("list", NROW(shape))
+shape[["metasummary"]] <- vector("list", NROW(shape))
 
 for(i in seq_len(NROW(shape))) {
   
@@ -197,17 +198,6 @@ for(i in seq_len(NROW(shape))) {
     row.names = NULL
   ) |> dplyr::rename(year = X1, basemap = X2, id_quad = X3)
 
-  # Get the download links per quad ID
-  # links <- lapply(shape[["ids"]][[i]], \(yearly_ids) {
-  #   lapply(yearly_ids, \(basemap_ids) {
-  #     data.frame(id_quad = names(basemap_ids), dl_link = attr(basemap_ids, "links"))
-  #   }) |> dplyr::bind_rows()
-  # }) |> dplyr::bind_rows()
-  # # Add them
-  # ids <- dplyr::left_join(ids, links, by = "id_quad")
-  # These are always based on the basemap and quad ID:
-  # https://link.planet.com/basemaps/v1/mosaics/34ead9f8-c7af-4daf-a266-e514251eeea7/quads/708-1052/full?api_key=
-  
   # We can request up to 250 at a time (scene IDs can appear in multiple quads)
   id_chunks <- ids[["id_scene"]] |> 
     unique() |> 
@@ -226,11 +216,13 @@ for(i in seq_len(NROW(shape))) {
     warning("No information found for ", length(skipped), " scenes:\n\t",
       paste0("'", skipped, "'", collapse = "\n\t"))
   }
+
+    shape[["metadata"]][[i]] <- metadata
  
   # We need to:
   #   1) Compute summary statistics per basemap
   #   2) Choose the optimal basemap (month) where appropriate
-  shape[["meta"]][[i]] <- metadata |>
+  shape[["metasummary"]][[i]] <- metadata |>
     dplyr::group_by(year, basemap) |>
     dplyr::summarise( # Summary statistics
       id = shape[["id"]][i], # Explicit, to help match to the shape
@@ -246,3 +238,14 @@ for(i in seq_len(NROW(shape))) {
     ) |> dplyr::group_by(year) |> 
     dplyr::slice_min(cloud_avg, n = 1) # We only keep the best basemap per year
 }
+
+# The quad download links are stored, but they always seem to follow from basemap and quad ID:
+# https://link.planet.com/basemaps/v1/mosaics/34ead9f8-c7af-4daf-a266-e514251eeea7/quads/708-1052/full?api_key=
+# Get the download links per quad ID
+# links <- lapply(shape[["ids"]][[i]], \(yearly_ids) {
+#   lapply(yearly_ids, \(basemap_ids) {
+#     data.frame(id_quad = names(basemap_ids), dl_link = attr(basemap_ids, "links"))
+#   }) |> dplyr::bind_rows()
+# }) |> dplyr::bind_rows()
+# # Add them
+# ids <- dplyr::left_join(ids, links, by = "id_quad")
