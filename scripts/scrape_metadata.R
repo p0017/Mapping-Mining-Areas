@@ -201,7 +201,7 @@ for(i in seq_len(NROW(shape))) {
   # We can request up to 250 at a time (scene IDs can appear in multiple quads)
   id_chunks <- ids[["id_scene"]] |> 
     unique() |> 
-    split(ceiling(seq_along(ids[["id_scene"]]) / 250))
+    split(ceiling(seq_along(unique(ids[["id_scene"]])) / 250))
   metadata <- lapply(id_chunks, \(chunk) {
     tryCatch({get_metadata(chunk, geometry = FALSE)}, error = function(e) {
       warning("Error processing chunk: ", e$message)
@@ -211,13 +211,13 @@ for(i in seq_len(NROW(shape))) {
   metadata <- dplyr::left_join(ids, metadata, by = "id_scene")
   
   # Some IDs do not seem to work via this API ---
-  if(any(!id_scene %in% metadata$id_scene)) {
-    skipped <- id_scene[!id_scene %in% metadata$id_scene]
+  if(any(!ids[["id_scene"]] %in% metadata$id_scene)) {
+    skipped <- ids[["id_scene"]][!ids[["id_scene"]] %in% metadata$id_scene]
     warning("No information found for ", length(skipped), " scenes:\n\t",
       paste0("'", skipped, "'", collapse = "\n\t"))
   }
 
-    shape[["metadata"]][[i]] <- metadata
+  shape[["metadata"]][[i]] <- metadata
  
   # We need to:
   #   1) Compute summary statistics per basemap
@@ -238,6 +238,7 @@ for(i in seq_len(NROW(shape))) {
     ) |> dplyr::group_by(year) |> 
     dplyr::slice_min(cloud_avg, n = 1) # We only keep the best basemap per year
 }
+saveRDS(shape, "data/segmentation/global_mining_polygons_v2_with_IDs+meta.gpkg")
 
 # The quad download links are stored, but they always seem to follow from basemap and quad ID:
 # https://link.planet.com/basemaps/v1/mosaics/34ead9f8-c7af-4daf-a266-e514251eeea7/quads/708-1052/full?api_key=
@@ -249,3 +250,12 @@ for(i in seq_len(NROW(shape))) {
 # }) |> dplyr::bind_rows()
 # # Add them
 # ids <- dplyr::left_join(ids, links, by = "id_quad")
+
+#
+meta_sm <- shape[["metasummary"]] |> dplyr::bind_rows()
+meta_df <- shape[["metadata"]] |> dplyr::bind_rows()
+
+op <- par(mfrow = c(1, 2))
+hist(meta_df[["cloud_cover"]], main = "all scenes")
+hist(meta_sm[["cloud_avg"]], main = "| best month per quad")
+par(op)
