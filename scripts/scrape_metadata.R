@@ -91,7 +91,7 @@ request_quad <- function(query, id_basemap) {
 }
 
 # Request scene IDs, called by `get_ids()`
-request_scenes <- function(query, id_basemap, id_quad) {
+request_scenes <- function(query, id_basemap, id_quad, check_id = FALSE) {
   
   # Request scenes in the quad for the bbox and basemap
   response <- paste(API_URL, id_basemap, "quads", id_quad, "items", sep = "/") |> 
@@ -108,7 +108,7 @@ request_scenes <- function(query, id_basemap, id_quad) {
   # Pull the scene IDs
   vapply(content[["items"]], \(item) { # We need values from 'response > items > link'
     out <- gsub(".*\\/items\\/([^#]*)#.*", "\\1", item[["link"]])
-    if(!grepl("[0-9]{8}_[0-9]{2,6}_[0-9]{2,6}_[0-9a-f]{4}", out)) {
+    if(isTRUE(check_id) && !grepl("[0-9]{8}_[0-9]{2,6}.[0-9]{0,6}_[0-9a-f]{4}$", out)) {
       message("Scene ID '", out, "' for the quad '", id_quad, "' at bbox '", query[["bbox"]], 
         "' and basemap '", id_basemap, "' does not match the expected pattern.")
     }
@@ -120,12 +120,13 @@ request_scenes <- function(query, id_basemap, id_quad) {
 #'
 #' @param id_scene Vector of scene ID(s).
 #' @param geometry Whether to also return the geometry of the scene(s).
+#' @param retry Whether to retry if there is no usable response.
 #'
 #' @return
 #'
 #' @examples
 #' get_metadata(c("20241120_133254_39_24d0", "20241127_133235_53_24bf"), FALSE)
-get_metadata <- function(id_scene, geometry = TRUE) {
+get_metadata <- function(id_scene, geometry = TRUE, retry = TRUE) {
   
   if(length(id_scene) > 250) {
     stop("Only up to 250 scenes are returned at a time.")
@@ -161,6 +162,15 @@ get_metadata <- function(id_scene, geometry = TRUE) {
     out
   })
   tbl <- dplyr::bind_rows(lst) # More robust (not all columns are always present)
+  is_missing <- !id_scene %in% tbl[["id_scene"]]
+  if(isTRUE(retry) && any(is_missing)) { # If some IDs did not return metadata, we retry them
+    extra_rows <- id_scene[is_missing] |> # Split the vector into half
+      split(seq_along(id_scene[is_missing]) <= ceiling(length(id_scene[is_missing]) / 2)) |> 
+      lapply(\(ids) { # Stop at the basecase of 1 ID
+      get_metadata(ids, geometry = geometry, retry = length(ids) > 1)
+    }) |> dplyr::bind_rows()
+    tbl <- bind_rows(tbl, extra_rows)
+  }
   tbl
 }
 
@@ -183,7 +193,7 @@ for(i in seq_len(NROW(shape))) {
     return(NA_real_)
   })
 }
-saveRDS(ids, "data/segmentation/global_mining_polygons_v2_ids.gpkg")
+saveRDS(ids, "data/segmentation/global_mining_polygons_v2_ids.rds")
 
 
 # Obtain metadata using the IDs ---
@@ -201,15 +211,29 @@ for(i in seq_len(NROW(shape))) {
   ) |> dplyr::rename(year = X1, basemap = X2, id_quad = X3)
 
   # We can request up to 250 at a time (scene IDs can appear in multiple quads)
-  id_chunks <- id_df[["id_scene"]] |> 
-    unique() |> 
-    split(ceiling(seq_along(unique(id_df[["id_scene"]])) / 250))
+  # Ones with "RapidEye" (from 2016) in their name don't seem to work
+  id_lookup <- id_df[["id_scene"]][!grepl("RapidEye", id_df[["id_scene"]])]
+  id_chunks <- id_lookup |> unique() |> 
+    split(ceiling(seq_along(unique(id_lookup)) / 250))
+  
+  # We request the metadata in chunks of 250
+  #   If there's an error in a chunk, IDs are split into chunks of 25
   metadata <- lapply(id_chunks, \(chunk) {
-    tryCatch({get_metadata(chunk, geometry = FALSE)}, error = \(e) {
-      warning("Error processing chunk:\n", e$message)
-      return(data.frame(id_scene = chunk)) # The rest will be NA
+    tryCatch({get_metadata(chunk, geometry = FALSE, retry = FALSE)}, error = \(e) {
+      warning("Issue processing chunk:\n", e$message, "\nReattempting ...")
+      tryCatch({ # Split down to 25 each
+        Sys.sleep(1) # Wait a sec
+        chunk |> split(ceiling(seq_along(chunk) / 25)) |> 
+          lapply(\(chunk) get_metadata(chunk, geometry = FALSE)) |> 
+          dplyr::bind_rows()
+        }, error = \(e) {
+        warning("Error processing chunk – returning empty dataframe.")
+        return(data.frame(id_scene = chunk)) # The rest will be NA
+      })
+      
     })
   }) |> dplyr::bind_rows()
+  
   metadata <- dplyr::left_join(id_df, metadata, by = "id_scene")
   
   # Some IDs do not seem to work via this API ---
@@ -240,23 +264,39 @@ for(i in seq_len(NROW(shape))) {
     ) |> dplyr::group_by(year) |> 
     dplyr::slice_min(cloud_avg, n = 1) # We only keep the best basemap per year
 }
-saveRDS(meta_dt, "data/segmentation/global_mining_polygons_v2_metadata.gpkg")
-saveRDS(meta_sm, "data/segmentation/global_mining_polygons_v2_meta-sm.gpkg")
 
-# The quad download links are stored, but they always seem to follow from basemap and quad ID:
+# It's easier to work with a long dataframe over a list
+meta_sm <- meta_sm |> dplyr::bind_rows()
+meta_dt <- meta_dt |> dplyr::bind_rows()
+
+# Check erroneous responses
+cloud_na <- meta_dt_df |> dplyr::group_by(year, basemap, id_quad, id_scene) |> 
+  dplyr::summarise(s = sum(is.na(cloud_cover))) |> 
+  dplyr::filter(s > 0)
+cloud_na
+
+# We could try and fill the gaps (should recompute summaries then)
+id_missing <- cloud_na[["id_scene"]] |> unique() # Scenes can appear in multiple quads
+chunk_missing <- id_missing |> split(ceiling(seq_along(id_missing) / 250))
+redo <- lapply(chunk_missing, \(chunk) {
+  tryCatch({get_metadata(chunk, geometry = FALSE)}, error = \(e) {
+    warning("Error processing chunk – returning empty dataframe.")
+    return(data.frame(id_scene = chunk)) # The rest will be NA
+  })
+}) |> dplyr::bind_rows()
+# Missing completely
+plot(id_missing %in% redo[["id_scene"]]) # All should be here
+plot(id_missing %in% redo[["id_scene"]][is.na(redo[["cloud_cover"]])]) # Some don't work
+
+saveRDS(meta_dt, "data/segmentation/global_mining_polygons_v2_metadata.rds")
+saveRDS(meta_sm, "data/segmentation/global_mining_polygons_v2_meta-sm.rds")
+
+# The quad download links are stored in an attribute of the quad, but they 
+# always seem to follow from basemap and quad ID:
 # https://link.planet.com/basemaps/v1/mosaics/34ead9f8-c7af-4daf-a266-e514251eeea7/quads/708-1052/full?api_key=
-# Get the download links per quad ID
-# links <- lapply(shape[["ids"]][[i]], \(yearly_ids) {
-#   lapply(yearly_ids, \(basemap_ids) {
-#     data.frame(id_quad = names(basemap_ids), dl_link = attr(basemap_ids, "links"))
-#   }) |> dplyr::bind_rows()
-# }) |> dplyr::bind_rows()
-# # Add them
-# ids <- dplyr::left_join(ids, links, by = "id_quad")
 
-# Use them
-meta_sm_df <- meta_sm |> dplyr::bind_rows()
-meta_dt_df <- meta_dt |> dplyr::bind_rows()
+
+# Use the data ---
 
 op <- par(mfrow = c(1, 2))
 hist(meta_dt_df[["cloud_cover"]], main = "all scenes")
