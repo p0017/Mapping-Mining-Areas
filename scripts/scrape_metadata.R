@@ -6,33 +6,73 @@ library("dplyr") # for bind_rows
 
 API_KEY <- Sys.getenv("API_KEY")
 API_URL <- "https://api.planet.com/basemaps/v1/mosaics"
-BASEMAPS <- list( # Names of the basemaps – composites until 2020, monthly afterwards
-  '2016' = 'planet_medres_normalized_analytic_2016-06_2016-11_mosaic',
-  '2017' = 'planet_medres_normalized_analytic_2017-06_2017-11_mosaic', 
-  '2018' = 'planet_medres_normalized_analytic_2018-06_2018-11_mosaic',
-  '2019' = 'planet_medres_normalized_analytic_2019-06_2019-11_mosaic',
-  '2020' = 'planet_medres_normalized_analytic_2020-06_2020-08_mosaic',
-  '2021' = paste0('planet_medres_normalized_analytic_2021-', formatC(6:11, width = 2, flag = "0"), '_mosaic'),
-  '2022' = paste0('planet_medres_normalized_analytic_2022-', formatC(6:11, width = 2, flag = "0"), '_mosaic'),
-  '2023' = paste0('planet_medres_normalized_analytic_2023-', formatC(6:11, width = 2, flag = "0"), '_mosaic'),
-  '2024' = paste0('planet_medres_normalized_analytic_2024-', formatC(6:11, width = 2, flag = "0"), '_mosaic')
+BASEMAPS_ID <- list(
+  "2016" = c("planet_medres_normalized_analytic_2016-06_2016-11_mosaic" = "d514a774-2bb8-45c5-b552-1577b6711fca"),
+  "2017" = c("planet_medres_normalized_analytic_2017-06_2017-11_mosaic" = "86a3070d-c49b-4d66-b232-f6cf8112c0c7"),
+  "2018" = c("planet_medres_normalized_analytic_2018-06_2018-11_mosaic" = "41ceab16-f41e-47fd-9438-cac8ffef6a82"),
+  "2019" = c("planet_medres_normalized_analytic_2019-06_2019-11_mosaic" = "be47e0f2-c91b-41b5-865e-eb4d212b59e6"),
+  "2020" = c("planet_medres_normalized_analytic_2020-06_2020-08_mosaic" = "b1a5e592-a608-4e61-b588-015bf6331eca"),
+  "2021" = c(
+    "planet_medres_normalized_analytic_2021-06_mosaic" = "733473f6-b85c-4d31-b10e-d73ea3186310",
+    "planet_medres_normalized_analytic_2021-07_mosaic" = "a22d3de4-f597-47ee-849e-5408f8cbbce5",
+    "planet_medres_normalized_analytic_2021-08_mosaic" = "ce7bad0f-a4a0-45fd-904b-eb6cc6eee373",
+    "planet_medres_normalized_analytic_2021-09_mosaic" = "168b5f2e-e0ad-474b-bfe6-c0d4c17df905",
+    "planet_medres_normalized_analytic_2021-10_mosaic" = "4a18d02d-2a17-4548-b705-9834ed866478",
+    "planet_medres_normalized_analytic_2021-11_mosaic" = "d7e95d46-64a9-4553-b1ea-574e21b49562"
+  ),
+  "2022" = c(
+    "planet_medres_normalized_analytic_2022-06_mosaic" = "540b304e-ecfb-449d-a13b-3f16ee6923d6",
+    "planet_medres_normalized_analytic_2022-07_mosaic" = "a39f3482-f960-4800-95fc-bd2542fafa66",
+    "planet_medres_normalized_analytic_2022-08_mosaic" = "9eff8b55-451b-4d08-9a80-a47c8ac1cb93",
+    "planet_medres_normalized_analytic_2022-09_mosaic" = "cb934fb3-63aa-4a6c-849f-84f599030ea9",
+    "planet_medres_normalized_analytic_2022-10_mosaic" = "9aef7f2c-9ed1-42d5-81cd-721b04eef49e",
+    "planet_medres_normalized_analytic_2022-11_mosaic" = "0bdd9cae-2eb0-4fb3-8042-3478e18e7ba4"
+  ),
+  "2023" = c(
+    "planet_medres_normalized_analytic_2023-06_mosaic" = "c7d9af9d-56e5-445a-b9e2-42570826594e",
+    "planet_medres_normalized_analytic_2023-07_mosaic" = "20ceddc3-0601-4da8-aa2d-0894ad5a8740",
+    "planet_medres_normalized_analytic_2023-08_mosaic" = "4433f903-97f6-4529-9002-2428d75a0baa",
+    "planet_medres_normalized_analytic_2023-09_mosaic" = "8801ebff-38ad-4615-982f-994949be5eb8",
+    "planet_medres_normalized_analytic_2023-10_mosaic" = "0c96274e-ca4a-4541-9ee5-94ec35e5dda8",
+    "planet_medres_normalized_analytic_2023-11_mosaic" = "318bcbe2-cd4b-46f8-aaa9-79505004ac3c"
+  ),
+  "2024" = c(
+    "planet_medres_normalized_analytic_2024-06_mosaic" = "8b6ce4f5-9987-4b0d-afcd-39000eb395b8",
+    "planet_medres_normalized_analytic_2024-07_mosaic" = "62fec4a1-7ef7-45a3-b903-e92e0967260f",
+    "planet_medres_normalized_analytic_2024-08_mosaic" = "c4d4bb96-42d7-4275-8781-7745c90a7867",
+    "planet_medres_normalized_analytic_2024-09_mosaic" = "02e1d63d-21d6-4355-beed-504c8e3595db",
+    "planet_medres_normalized_analytic_2024-10_mosaic" = "ac5b033c-fefb-4fb2-9165-a6f81ecab722",
+    "planet_medres_normalized_analytic_2024-11_mosaic" = "34ead9f8-c7af-4daf-a266-e514251eeea7"
+  )
 )
+# Otherwise – request using the names and store the IDs
+# BASEMAPS <- list( # Names of the basemaps – composites until 2020, monthly afterwards
+#   '2016' = 'planet_medres_normalized_analytic_2016-06_2016-11_mosaic',
+#   '2017' = 'planet_medres_normalized_analytic_2017-06_2017-11_mosaic', 
+#   '2018' = 'planet_medres_normalized_analytic_2018-06_2018-11_mosaic',
+#   '2019' = 'planet_medres_normalized_analytic_2019-06_2019-11_mosaic',
+#   '2020' = 'planet_medres_normalized_analytic_2020-06_2020-08_mosaic',
+#   '2021' = paste0('planet_medres_normalized_analytic_2021-', formatC(6:11, width = 2, flag = "0"), '_mosaic'),
+#   '2022' = paste0('planet_medres_normalized_analytic_2022-', formatC(6:11, width = 2, flag = "0"), '_mosaic'),
+#   '2023' = paste0('planet_medres_normalized_analytic_2023-', formatC(6:11, width = 2, flag = "0"), '_mosaic'),
+#   '2024' = paste0('planet_medres_normalized_analytic_2024-', formatC(6:11, width = 2, flag = "0"), '_mosaic')
+# )
 # This should be the equivalent of BASEMAPS with IDs instead of names
-BASEMAPS_ID <- lapply(BASEMAPS, \(elements) { # Per year
-  vapply(elements, \(name) { # Per basemap
-    response <- httr::GET(API_URL, query = list("name__is" = name), httr::authenticate(API_KEY, ""))
-    content <- httr::content(response)
-    out <- content[["mosaics"]][[1]][["id"]]
-    if(!grepl("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", out)) {
-      warning("ID '", out, "' for '", name, "' does not match the expected pattern.")
-    }
-    out
-  }, character(1L))
-})
+# BASEMAPS_ID <- lapply(BASEMAPS, \(elements) { # Per year
+#   vapply(elements, \(name) { # Per basemap
+#     response <- httr::GET(API_URL, query = list("name__is" = name), httr::authenticate(API_KEY, ""))
+#     content <- httr::content(response)
+#     out <- content[["mosaics"]][[1]][["id"]]
+#     if(!grepl("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", out)) {
+#       warning("ID '", out, "' for '", name, "' does not match the expected pattern.")
+#     }
+#     out
+#   }, character(1L))
+# })
 
 #' Get quad and scene IDs for a bbox and selected years
 #'
-#' @param bbox Bounding box of a polygon, as returned by `st_bbox`
+#' @param bbox Bounding box of a polygon, as returned by `sf::st_bbox`
 #' @param years Years between 2016 and 2024 to retrieve
 #'
 #' @return
@@ -63,7 +103,7 @@ get_ids <- function(bbox, years = 2016:2024) {
 }
 
 # Request quad IDs and downloads links, called by `get_ids()`
-request_quad <- function(query, id_basemap) {
+request_quad <- function(query, id_basemap, check_id = FALSE) {
   
   # Request the quad ID for the bbox and basemap
   response <- paste(API_URL, id_basemap, "quads", sep = "/") |> 
@@ -78,7 +118,7 @@ request_quad <- function(query, id_basemap) {
   content <- httr::content(response)
   
   quad_ids <- vapply(content[["items"]], \(item) item[["id"]], character(1L))
-  if(!all(grepl("[0-9a-f]{3}-[0-9a-f]{4,6}", quad_ids))) {
+  if(isTRUE(check_id) && !all(grepl("[0-9a-f]{3}-[0-9a-f]{4,6}", quad_ids))) {
     warning("Quad ID '", quad_ids[!grepl("[0-9a-f]{3}-[0-9a-f]{4,6}", quad_ids)], 
       "' at bbox '", query[["bbox"]], "' and basemap '", 
       id_basemap, "' does not match the expected pattern.")
@@ -128,29 +168,26 @@ request_scenes <- function(query, id_basemap, id_quad, check_id = FALSE) {
 #' get_metadata(c("20241120_133254_39_24d0", "20241127_133235_53_24bf"), FALSE)
 get_metadata <- function(id_scene, geometry = TRUE, retry = TRUE) {
   
-  if(length(id_scene) > 250) {
-    stop("Only up to 250 scenes are returned at a time.")
-  }
+  if(length(id_scene) > 250) {stop("Only up to 250 scenes are returned at a time.")}
   
-  payload <- list(filter = list(type = "AndFilter", # Arcane query
-    config = list(list(type = "AndFilter", 
-      config = list(
-        list(type = "StringInFilter", field_name = "id", config = as.list(unname(id_scene))),
-        list(type = "StringInFilter", field_name = "item_type", config = list("PSScene"))
-      )
-    ))
-  ), item_types = list("PSScene"))
+  # Arcane query
+  payload <- list(filter = list(type = "AndFilter", config = list(list(type = "AndFilter", 
+    config = list(
+      list(type = "StringInFilter", field_name = "id", config = as.list(unname(id_scene))),
+      list(type = "StringInFilter", field_name = "item_type", config = list("PSScene"))
+    )
+  ))), item_types = list("PSScene"))
   
   response <- httr::POST(
     url = "https://api.planet.com/data/v1/quick-search",
-    body = payload, encode = "json", httr::authenticate(API_KEY, ""),
-    httr::content_type_json()
+    body = payload, encode = "json", httr::authenticate(API_KEY, ""), httr::content_type_json()
   )
   status <- httr::status_code(response)
   if(status < 100 || status > 300) {
     stop("Received status code ", status, " when requesting scene '", id_scene, "'.")
   }
   content <- httr::content(response)
+  
   # Pull the metadata and geometry into one table
   lst <- lapply(content[["features"]], function(feature) {
     out <- feature[["properties"]] |> as.data.frame()
@@ -161,13 +198,16 @@ get_metadata <- function(id_scene, geometry = TRUE, retry = TRUE) {
     }
     out
   })
+  
   tbl <- dplyr::bind_rows(lst) # More robust (not all columns are always present)
+  
+  # Check which IDs are in the table
   is_missing <- !id_scene %in% tbl[["id_scene"]]
-  if(isTRUE(retry) && any(is_missing)) { # If some IDs did not return metadata, we retry them
-    extra_rows <- id_scene[is_missing] |> # Split the vector into half
+  if(isTRUE(retry) && any(is_missing)) { # Retry if IDs are missing
+    extra_rows <- id_scene[is_missing] |> # Split the ID vector into half
       split(seq_along(id_scene[is_missing]) <= ceiling(length(id_scene[is_missing]) / 2)) |> 
-      lapply(\(ids) { # Stop at the basecase of 1 ID
-      get_metadata(ids, geometry = geometry, retry = length(ids) > 1)
+      lapply(\(ids) { # Stop recursion at a basecase (less than 8 elements / 5 recursions)
+      get_metadata(ids, geometry = geometry, retry = length(ids) >= 8)
     }) |> dplyr::bind_rows()
     tbl <- bind_rows(tbl, extra_rows)
   }
@@ -210,28 +250,30 @@ for(i in seq_len(NROW(shape))) {
     row.names = NULL
   ) |> dplyr::rename(year = X1, basemap = X2, id_quad = X3)
 
-  # We can request up to 250 at a time (scene IDs can appear in multiple quads)
-  # Ones with "RapidEye" (from 2016) in their name don't seem to work
-  id_lookup <- id_df[["id_scene"]][!grepl("RapidEye", id_df[["id_scene"]])]
-  id_chunks <- id_lookup |> unique() |> 
-    split(ceiling(seq_along(unique(id_lookup)) / 250))
+  # We can request up to 250 at a time
+  # - Scene IDs can appear in multiple quads)
+  # - Ones with "RapidEye" (from 2016) in their name don't seem to work
+  id_lookup <- id_df[["id_scene"]][!grepl("RapidEye", id_df[["id_scene"]])] |> unique()
+  id_chunks <- id_lookup |> split(ceiling(seq_along(id_lookup) / 250))
   
   # We request the metadata in chunks of 250
-  #   If there's an error in a chunk, IDs are split into chunks of 25
+  # - If there's an error in a chunk, IDs are split into chunks of 32
   metadata <- lapply(id_chunks, \(chunk) {
-    tryCatch({get_metadata(chunk, geometry = FALSE, retry = FALSE)}, error = \(e) {
-      warning("Issue processing chunk:\n", e$message, "\nReattempting ...")
-      tryCatch({ # Split down to 25 each
-        Sys.sleep(1) # Wait a sec
-        chunk |> split(ceiling(seq_along(chunk) / 25)) |> 
-          lapply(\(chunk) get_metadata(chunk, geometry = FALSE)) |> 
-          dplyr::bind_rows()
-        }, error = \(e) {
-        warning("Error processing chunk – returning empty dataframe.")
-        return(data.frame(id_scene = chunk)) # The rest will be NA
-      })
-      
-    })
+    tryCatch(get_metadata(chunk, geometry = FALSE, retry = FALSE), 
+      error = \(e) {
+        warning("Issue processing chunk:\n", e$message, "\nReattempting ...")
+        Sys.sleep(.5) # Wait (half) a sec
+        tryCatch({# On error, split further and retry (with retry enabled)
+          chunk |> split(ceiling(seq_along(chunk) / 32)) |>
+            lapply(\(chunk) get_metadata(chunk, geometry = FALSE, retry = TRUE)) |>
+            dplyr::bind_rows()
+          }, error = \(e) {
+            warning("Error processing chunk – returning empty dataframe.")
+            return(data.frame(id_scene = chunk)) # The rest will be NA
+          }
+        )
+      }
+    )
   }) |> dplyr::bind_rows()
   
   metadata <- dplyr::left_join(id_df, metadata, by = "id_scene")
@@ -244,11 +286,16 @@ for(i in seq_len(NROW(shape))) {
   }
 
   meta_dt[[i]] <- metadata
- 
-  # We need to:
-  #   1) Compute summary statistics per basemap
-  #   2) Choose the optimal basemap (month) where appropriate
-  meta_sm[[i]] <- metadata |>
+}
+
+saveRDS(meta_dt, "data/segmentation/global_mining_polygons_v2_metadata.rds")
+
+
+# We need to:
+#   1) Compute summary statistics per basemap
+#   2) Choose the optimal basemap (month) where appropriate
+for(i in seq_len(length(meta_dt))) {
+  meta_sm[[i]] <- meta_dt[[i]] |>
     dplyr::group_by(year, basemap) |>
     dplyr::summarise( # Summary statistics
       id = shape[["id"]][i], # Explicit, to help match to the shape
@@ -269,7 +316,7 @@ for(i in seq_len(NROW(shape))) {
 meta_sm <- meta_sm |> dplyr::bind_rows()
 meta_dt <- meta_dt |> dplyr::bind_rows()
 
-# Check erroneous responses
+# Check erroneous responses ---
 cloud_na <- meta_dt_df |> dplyr::group_by(year, basemap, id_quad, id_scene) |> 
   dplyr::summarise(s = sum(is.na(cloud_cover))) |> 
   dplyr::filter(s > 0)
