@@ -84,11 +84,13 @@ else:
     gdf = gpd.read_file("./data/segmentation/mining_polygons_combined.gpkg")
 
 # Reading the union of two datasets
-# We are using the union since they intersect a lot
-# Maus, Victor, et al. "An update on global mining land use." Scientific data 9.1 (2022): 1-11.
-# https://www.nature.com/articles/s41597-022-01547-4.
-# Tang, Liang, and Tim T. Werner. "Global mining footprint mapped from high-resolution satellite imagery." Communications Earth & Environment 4.1 (2023): 134.
-# https://www.nature.com/articles/s43247-023-00805-6
+'''
+We are using the union since they intersect a lot
+Maus, Victor, et al. "An update on global mining land use." Scientific data 9.1 (2022): 1-11.
+https://www.nature.com/articles/s41597-022-01547-4.
+Tang, Liang, and Tim T. Werner. "Global mining footprint mapped from high-resolution satellite imagery." Communications Earth & Environment 4.1 (2023): 134.
+https://www.nature.com/articles/s43247-023-00805-6
+'''
 
 countries = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
 # Loading a country code dataset
@@ -136,8 +138,7 @@ print()
 print('processing', year)
 
 # This is the dict in which one needs to add the corresponding Planet parameters if one wants to include more recent data
-# The first parameter is the primary source, the second on is the secondary if a mine is not covered by the primary
-nicfi_urls = {'2016':'planet_medres_normalized_analytic_2016-06_2016-11_mosaic',
+NICFI_URLS = {'2016':'planet_medres_normalized_analytic_2016-06_2016-11_mosaic',
               '2017':'planet_medres_normalized_analytic_2017-06_2017-11_mosaic',
               '2018':'planet_medres_normalized_analytic_2018-06_2018-11_mosaic',
               '2019':'planet_medres_normalized_analytic_2019-06_2019-11_mosaic',
@@ -148,7 +149,7 @@ nicfi_urls = {'2016':'planet_medres_normalized_analytic_2016-06_2016-11_mosaic',
               '2024':'planet_medres_normalized_analytic_2024-11_mosaic'}
 
 # set params for search using name of primary mosaic
-parameters = {"name__is" : nicfi_urls[year]}
+parameters = {"name__is" : NICFI_URLS[year]}
 # make get request to access mosaic from basemaps API
 res = session.get(API_URL, params = parameters)
 mosaic = res.json()
@@ -267,7 +268,7 @@ parallel_process_tile(gdf, session)
 
 # Planet does not cover a great amount of polygons
 no_tiles_found = [False if tile_id.size == 0 else True for tile_id in gdf['tile_ids']]
-print('no tiles found for', no_tiles_found.count(False), 'out of', len(gdf), 'polygons')
+print('no tiles found for {} out of {} polygons'.format(str(no_tiles_found.count(False)), str(len(gdf))))
 gdf = gdf[no_tiles_found]
 gdf.reset_index(drop=True, inplace=True)
 
