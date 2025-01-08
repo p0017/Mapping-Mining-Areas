@@ -1,8 +1,8 @@
 
 # Preliminaries ---
 library("httr")
-library("sf") # for geometries
-library("dplyr") # for bind_rows
+library("sf")
+library("dplyr")
 
 API_KEY <- Sys.getenv("API_KEY")
 API_URL <- "https://api.planet.com/basemaps/v1/mosaics"
@@ -70,6 +70,18 @@ BASEMAPS_ID <- list(
 #   }, character(1L))
 # })
 
+
+# Functions ---
+
+# Download link
+get_link <- \(basemap, quads) {
+  year <- gsub(".*_(20[0-9]{2})-.*", "\\1", basemap)
+  id_basemap <- BASEMAPS_ID[[year]][[basemap]]
+  paste("https://link.planet.com/basemaps/v1/mosaics", 
+    id_basemap, "quads", quads, "full?api_key=", sep = "/")
+}
+
+
 #' Get quad and scene IDs for a bbox and selected years
 #'
 #' @param bbox Bounding box of a polygon, as returned by `sf::st_bbox`
@@ -111,6 +123,12 @@ request_quad <- function(query, id_basemap, check_id = FALSE) {
   
   # Check the status code
   status <- httr::status_code(response)
+  if(status == 429) { # Too many requests -- wait and retry
+    Sys.sleep(1.05)
+    response <- paste(API_URL, id_basemap, "quads", sep = "/") |> 
+      httr::GET(query = query, httr::authenticate(API_KEY, ""))
+    status <- httr::status_code(response)
+  }
   if(status < 100 || status > 300) {
     stop("Received status code ", status, " when requesting quads for bbox '", 
       query[["bbox"]], "' and basemap '",  id_basemap, "'.")
@@ -139,6 +157,12 @@ request_scenes <- function(query, id_basemap, id_quad, check_id = FALSE) {
   
   # Check the status code
   status <- httr::status_code(response)
+  if(status == 429) { # Too many requests -- wait and retry
+    Sys.sleep(1.05)
+    response <- paste(API_URL, id_basemap, "quads", id_quad, "items", sep = "/") |> 
+      httr::GET(query = query, httr::authenticate(API_KEY, ""))
+    status <- httr::status_code(response)
+  }
   if(status < 100 || status > 300) {
     stop("Received status code ", status, " when requesting scenes for quad '",
       id_quad, "', bbox '", query[["bbox"]], "', and basemap '",  id_basemap, "'.")
@@ -183,8 +207,20 @@ get_metadata <- function(id_scene, geometry = TRUE, retry = TRUE) {
     body = payload, encode = "json", httr::authenticate(API_KEY, ""), httr::content_type_json()
   )
   status <- httr::status_code(response)
+  if(status == 429) { # Too many requests -- wait and retry
+    Sys.sleep(1.05)
+    response <- httr::POST(
+      url = "https://api.planet.com/data/v1/quick-search",
+      body = payload, encode = "json", httr::authenticate(API_KEY, ""), httr::content_type_json()
+    )
+    status <- httr::status_code(response)
+  }
   if(status < 100 || status > 300) {
-    stop("Received status code ", status, " when requesting scene '", id_scene, "'.")
+    if(retry) {
+      warning("Received status code ", status, " when requesting scene '", id_scene, "'.")
+    } else {
+      stop("Received status code ", status, " when requesting scene '", id_scene, "'.")
+    }
   }
   content <- httr::content(response)
   
@@ -206,7 +242,7 @@ get_metadata <- function(id_scene, geometry = TRUE, retry = TRUE) {
   if(isTRUE(retry) && any(is_missing)) { # Retry if IDs are missing
     extra_rows <- id_scene[is_missing] |> # Split the ID vector into half
       split(seq_along(id_scene[is_missing]) <= ceiling(length(id_scene[is_missing]) / 2)) |> 
-      lapply(\(ids) { # Stop recursion at a basecase (less than 8 elements / 5 recursions)
+      lapply(\(ids) { # Stop recursive halving at a basecase
       get_metadata(ids, geometry = geometry, retry = length(ids) >= 8)
     }) |> dplyr::bind_rows()
     tbl <- bind_rows(tbl, extra_rows)
@@ -214,138 +250,3 @@ get_metadata <- function(id_scene, geometry = TRUE, retry = TRUE) {
   tbl
 }
 
-
-# Script -----
-
-# Load the shapefile that we use
-shape <- st_read("data/segmentation/global_mining_polygons_v2.gpkg") |> 
-  dplyr::filter(ISO3_CODE == "SUR") # Suriname for tests
-
-# Add an ID to make rows identifiable
-shape[["id"]] <- paste0(shape[["ISO3_CODE"]], formatC(seq_len(NROW(shape)), width = 5, flag = 0))
-# Slot for the basemap, quad, and scene IDs
-ids <- vector("list", NROW(shape))
-
-# Pull all relevant IDs ---
-for(i in seq_len(NROW(shape))) {
-  ids[[i]] <- tryCatch({shape[i, ] |> st_bbox() |> get_ids()}, error = \(e) {
-    warning("Error retrieving IDs for '", shape[["id"]][[i]], "'.")
-    return(NA_real_)
-  })
-}
-saveRDS(ids, "data/segmentation/global_mining_polygons_v2_ids.rds")
-
-
-# Obtain metadata using the IDs ---
-
-meta_dt <- meta_sm <- vector("list", NROW(shape))
-
-for(i in seq_len(NROW(shape))) {
-  
-  # Merge in the information on basemaps
-  id_df <- data.frame(
-    id_scene = unlist(ids[[i]]),
-    unlist(ids[[i]]) |> names() |> 
-      strsplit("\\.") |> sapply(\(names) names) |> t(),
-    row.names = NULL
-  ) |> dplyr::rename(year = X1, basemap = X2, id_quad = X3)
-
-  # We can request up to 250 at a time
-  # - Scene IDs can appear in multiple quads)
-  # - Ones with "RapidEye" (from 2016) in their name don't seem to work
-  id_lookup <- id_df[["id_scene"]][!grepl("RapidEye", id_df[["id_scene"]])] |> unique()
-  id_chunks <- id_lookup |> split(ceiling(seq_along(id_lookup) / 250))
-  
-  # We request the metadata in chunks of 250
-  # - If there's an error in a chunk, IDs are split into chunks of 32
-  metadata <- lapply(id_chunks, \(chunk) {
-    tryCatch(get_metadata(chunk, geometry = FALSE, retry = FALSE), 
-      error = \(e) {
-        warning("Issue processing chunk:\n", e$message, "\nReattempting ...")
-        Sys.sleep(.5) # Wait (half) a sec
-        tryCatch({# On error, split further and retry (with retry enabled)
-          chunk |> split(ceiling(seq_along(chunk) / 32)) |>
-            lapply(\(chunk) get_metadata(chunk, geometry = FALSE, retry = TRUE)) |>
-            dplyr::bind_rows()
-          }, error = \(e) {
-            warning("Error processing chunk – returning empty dataframe.")
-            return(data.frame(id_scene = chunk)) # The rest will be NA
-          }
-        )
-      }
-    )
-  }) |> dplyr::bind_rows()
-  
-  metadata <- dplyr::left_join(id_df, metadata, by = "id_scene")
-  
-  # Some IDs do not seem to work via this API ---
-  if(any(!id_df[["id_scene"]] %in% metadata$id_scene)) {
-    skipped <- id_df[["id_scene"]][!id_df[["id_scene"]] %in% metadata$id_scene]
-    warning("No information found for ", length(skipped), " scenes:\n\t",
-      paste0("'", skipped, "'", collapse = "\n\t"))
-  }
-
-  meta_dt[[i]] <- metadata
-}
-
-saveRDS(meta_dt, "data/segmentation/global_mining_polygons_v2_metadata.rds")
-
-
-# We need to:
-#   1) Compute summary statistics per basemap
-#   2) Choose the optimal basemap (month) where appropriate
-for(i in seq_len(length(meta_dt))) {
-  meta_sm[[i]] <- meta_dt[[i]] |>
-    dplyr::group_by(year, basemap) |>
-    dplyr::summarise( # Summary statistics
-      id = shape[["id"]][i], # Explicit, to help match to the shape
-      cloud_avg = mean(cloud_cover, na.rm = TRUE),
-      heavy_haze_avg = mean(heavy_haze_percent, na.rm = TRUE),
-      light_haze_avg = mean(light_haze_percent, na.rm = TRUE),
-      anomaly_avg = mean(anomalous_pixels, na.rm = TRUE),
-      clear_avg = mean(clear_percent, na.rm = TRUE),
-      clear_conf_avg = mean(clear_confidence_percent, na.rm = TRUE),
-      shadow_avg = mean(shadow_percent, na.rm = TRUE),
-      visible_avg = mean(visible_percent, na.rm = TRUE),
-      visible_conf_avg = mean(visible_confidence_percent, na.rm = TRUE)
-    ) |> dplyr::group_by(year) |> 
-    dplyr::slice_min(cloud_avg, n = 1) # We only keep the best basemap per year
-}
-
-# It's easier to work with a long dataframe over a list
-meta_sm <- meta_sm |> dplyr::bind_rows()
-meta_dt <- meta_dt |> dplyr::bind_rows()
-
-# Check erroneous responses ---
-cloud_na <- meta_dt_df |> dplyr::group_by(year, basemap, id_quad, id_scene) |> 
-  dplyr::summarise(s = sum(is.na(cloud_cover))) |> 
-  dplyr::filter(s > 0)
-cloud_na
-
-# We could try and fill the gaps (should recompute summaries then)
-id_missing <- cloud_na[["id_scene"]] |> unique() # Scenes can appear in multiple quads
-chunk_missing <- id_missing |> split(ceiling(seq_along(id_missing) / 250))
-redo <- lapply(chunk_missing, \(chunk) {
-  tryCatch({get_metadata(chunk, geometry = FALSE)}, error = \(e) {
-    warning("Error processing chunk – returning empty dataframe.")
-    return(data.frame(id_scene = chunk)) # The rest will be NA
-  })
-}) |> dplyr::bind_rows()
-# Missing completely
-plot(id_missing %in% redo[["id_scene"]]) # All should be here
-plot(id_missing %in% redo[["id_scene"]][is.na(redo[["cloud_cover"]])]) # Some don't work
-
-saveRDS(meta_dt, "data/segmentation/global_mining_polygons_v2_metadata.rds")
-saveRDS(meta_sm, "data/segmentation/global_mining_polygons_v2_meta-sm.rds")
-
-# The quad download links are stored in an attribute of the quad, but they 
-# always seem to follow from basemap and quad ID:
-# https://link.planet.com/basemaps/v1/mosaics/34ead9f8-c7af-4daf-a266-e514251eeea7/quads/708-1052/full?api_key=
-
-
-# Use the data ---
-
-op <- par(mfrow = c(1, 2))
-hist(meta_dt_df[["cloud_cover"]], main = "all scenes")
-hist(meta_sm_df[["cloud_avg"]], main = "| best month per quad")
-par(op)
