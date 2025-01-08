@@ -5,8 +5,9 @@ import shapely.geometry
 import shapely.ops
 from scipy.ndimage import binary_erosion, binary_opening, binary_fill_holes
 
-#This script contains some handy functions which are imported into segmentation_dataset_generation.py and gpkg_dataset_generation.py.
-
+'''
+This script contains some handy functions which are imported into segmentation_dataset_generation.py and gpkg_dataset_generation.py.
+'''
 
 def get_bbox(polygon:shapely.geometry.polygon.Polygon) -> shapely.geometry.polygon.Polygon:
     """
@@ -297,7 +298,7 @@ def isnan(a):
         return pd.isnull(a)
 
 #optional postprocessing using morphological operations
-def postprocess(pred: np.ndarray, opening_iter:int=1, erosion_iter:int=2) -> np.ndarray:
+def postprocess(pred: np.ndarray, opening_iter:int=0, erosion_iter:int=0) -> np.ndarray:
     """
     Does postprocessing using morphological operations on a 2d Numpy array containing binary values.
     Used on the predictions of the segmentation model.
@@ -329,8 +330,10 @@ def postprocess(pred: np.ndarray, opening_iter:int=1, erosion_iter:int=2) -> np.
     """
 
     pred = binary_fill_holes(pred)
-    pred = binary_opening(pred, iterations=opening_iter)
-    pred = binary_erosion(pred, iterations=erosion_iter)
+    if opening_iter > 0:
+        pred = binary_opening(pred, iterations=opening_iter)
+    if erosion_iter > 0:
+        pred = binary_erosion(pred, iterations=erosion_iter)
     return pred.astype(int)
 
 def close_holes(poly: shapely.Polygon) -> shapely.Polygon:
