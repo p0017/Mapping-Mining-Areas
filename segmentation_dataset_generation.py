@@ -468,7 +468,8 @@ def prepare_and_save(k:int, gdf:gpd.geodataframe.GeoDataFrame, set_type:str):
             rgb_resized.append(channel_resized)
 
         rgb_resized = np.array(rgb_resized).T
-        cv2.imwrite('./data/segmentation/{}/img_dir/{}/{}.png'.format(year, set_type, gdf['id'][k]), 255*rgb_resized)
+        if not cv2.imwrite('./data/segmentation/{}/img_dir/{}/{}.png'.format(year, set_type, gdf['id'][k]), 255*rgb_resized):
+            print("Failed to save image of polygon", k)
 
         if year == '2019':
             # turning the polygons into a target array of zeros and ones
@@ -491,7 +492,8 @@ def prepare_and_save(k:int, gdf:gpd.geodataframe.GeoDataFrame, set_type:str):
             # also downscaling the polygon target arrays to 512x512, using bicubic interpolation
             target_resized = cv2.resize(target, dsize=(512,512), interpolation=cv2.INTER_CUBIC)
             target_resized = np.array(target_resized).T
-            cv2.imwrite('./data/segmentation/{}/ann_dir/{}/{}.png'.format(year, set_type, gdf['id'][k]), target_resized)
+            if not cv2.imwrite('./data/segmentation/{}/ann_dir/{}/{}.png'.format(year, set_type, gdf['id'][k]), target_resized):
+                print("Failed to save segmentation mask of polygon", k)
 
     except OSError as e:
         print('Caught OSError', e, 'on polygon', k)
@@ -585,18 +587,22 @@ train_indices = [i for i in non_hand_validated_indices if (i not in val_indices)
 gdf_train = gdf.iloc[train_indices].copy()
 gdf_train.reset_index(drop=True, inplace=True)
 
-gdf_test = gdf[gdf['id'].isin(HAND_VALIDATED_IDS)]
-gdf_test.reset_index(drop=True, inplace=True)
-
 gdf_val = gdf.iloc[val_indices].copy()
 gdf_val.reset_index(drop=True, inplace=True)
 
-print('train', len(gdf_train), 'test', len(gdf_test), 'val', len(gdf_val))
+has_hand_validated_indices = len(non_hand_validated_indices) < len(gdf)
+if has_hand_validated_indices:
+    gdf_test = gdf[gdf['id'].isin(HAND_VALIDATED_IDS)]
+    gdf_test.reset_index(drop=True, inplace=True)
 
+print('train', len(gdf_train), 'test', len(gdf_test), 'val', len(gdf_val))
 print('preparing and saving data')
 parallel_prepare_and_save(gdf_train, set_type='train')
-parallel_prepare_and_save(gdf_test, set_type='test')
 parallel_prepare_and_save(gdf_val, set_type='val')
+
+if has_hand_validated_indices:
+    parallel_prepare_and_save(gdf_test, set_type='test')
+
 
 if demo:
     print(year, 'demo done.')
