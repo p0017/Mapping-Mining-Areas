@@ -133,7 +133,7 @@ Replace `YOUR_YEAR` with the desired year, and navigate to the directory contain
 ---
 
 ## Acknowledgements
-The authors gratefully acknowledge financial support from the Austrian National Bank (OeNB Anniversary Fund, project No. 18799).
+The authors gratefully acknowledge financial support from the Austrian National Bank (OeNB anniversary fund, project No. 18799) and the City of Vienna (Hochschuljubiläumsfonds, project No. H-457973/2023).
 
 ---
 
