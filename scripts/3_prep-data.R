@@ -17,7 +17,7 @@ df <- do.call(rbind, lapply(names(ids), \(id_shape) {
           year = years,
           basemap = basemaps,
           quad = quads,
-          scenes = ids[[id_shape]][[years]][[basemaps]][[quads]]
+          scene = ids[[id_shape]][[years]][[basemaps]][[quads]]
         )
       }))
     }))
@@ -25,8 +25,8 @@ df <- do.call(rbind, lapply(names(ids), \(id_shape) {
 }))
 
 # Add the scene metadata
-df_meta <- left_join(df, meta_df, by = c("scenes" = "id_scene"))
-saveRDS("data/segmentation/metadata.rds")
+df_meta <- left_join(df, meta_df, by = c("scene" = "id_scene"))
+saveRDS(df_meta, "data/segmentation/metadata.rds")
 
 # Compute summary statistics
 df_sm <- df_meta |> group_by(id_shape, year, basemap, quad) |>
@@ -43,15 +43,19 @@ df_sm <- df_meta |> group_by(id_shape, year, basemap, quad) |>
       visible_avg = mean(visible_percent, na.rm = TRUE),
       visible_conf_avg = mean(visible_confidence_percent, na.rm = TRUE),
     )
-saveRDS("data/segmentation/metadata_summary.rds")
+saveRDS(df_sm, "data/segmentation/metadata_summary.rds")
 
 # Select the best basemap per quad per year
 df_sel <- df_sm |> group_by(id_shape, year, quad) |>
     dplyr::arrange(dplyr::desc(dplyr::row_number())) |> # Keep the last month on a tie
     dplyr::slice_min(badness_avg, n = 1, with_ties = FALSE) # Best basemap
 
+# We have metadata for all relevant picks
+df_sel |> group_by(year) |> summarise(sum(is.na(badness_avg)))
+
 # Prepare a CSV with the download link
 df_sel |>
+  # filter(!id_shape %in% c("GHA11078")) |> # Filter out a *dirty* polygon w/ overlaps
   select(id_shape, year, basemap, quad) |> 
   mutate(link = get_link(basemap, quad)) |> 
-  write.csv("data/segmentation/to_download.csv", row.names = FALSE)
+  write.csv("data/segmentation/cloudfree_quads_info.csv", row.names = FALSE)

@@ -4,6 +4,7 @@ library("httr")
 library("sf")
 library("dplyr")
 
+readRenviron(".env")
 API_KEY <- Sys.getenv("API_KEY")
 API_URL <- "https://api.planet.com/basemaps/v1/mosaics"
 BASEMAPS_ID <- list(
@@ -11,7 +12,12 @@ BASEMAPS_ID <- list(
   "2017" = c("planet_medres_normalized_analytic_2017-06_2017-11_mosaic" = "86a3070d-c49b-4d66-b232-f6cf8112c0c7"),
   "2018" = c("planet_medres_normalized_analytic_2018-06_2018-11_mosaic" = "41ceab16-f41e-47fd-9438-cac8ffef6a82"),
   "2019" = c("planet_medres_normalized_analytic_2019-06_2019-11_mosaic" = "be47e0f2-c91b-41b5-865e-eb4d212b59e6"),
-  "2020" = c("planet_medres_normalized_analytic_2020-06_2020-08_mosaic" = "b1a5e592-a608-4e61-b588-015bf6331eca"),
+  "2020" = c(
+    "planet_medres_normalized_analytic_2020-06_2020-08_mosaic" = "b1a5e592-a608-4e61-b588-015bf6331eca",
+    "planet_medres_normalized_analytic_2020-09_mosaic" = "755805d4-8eba-4a61-a6ab-7514c1bde810",
+    "planet_medres_normalized_analytic_2020-10_mosaic" = "943d4604-7237-4f4f-9548-bb41f9db8254",
+    "planet_medres_normalized_analytic_2020-11_mosaic" = "a6f85a67-b879-42b3-ade3-38d02fc404c0"
+  ),
   "2021" = c(
     "planet_medres_normalized_analytic_2021-06_mosaic" = "733473f6-b85c-4d31-b10e-d73ea3186310",
     "planet_medres_normalized_analytic_2021-07_mosaic" = "a22d3de4-f597-47ee-849e-5408f8cbbce5",
