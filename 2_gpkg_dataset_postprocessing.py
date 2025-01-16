@@ -6,6 +6,11 @@ import geopandas as gpd
 #This means that the years 2016 and 2024, which only have a single ‘neighboring’ year, which we can compare the polygons to, feature a lower number of polygons.
 #Further, it assigns the correct country name and iso3 code to every polygon.
 
+# Optional buffer for more generous postprocessing
+use_buffer = True
+# 0.0005 corresponds to roughly 50 meters, increase for even more generous postprocessing
+buffer_size = 0.0005 
+
 
 global_datasets = {}
 
@@ -37,12 +42,45 @@ for i in range(len(global_datasets.keys())):
     if i != 0:
         previous_year = str(int(year) - 1)
         global_datasets_postprocessed[year]['tempid'] = range(global_datasets_postprocessed[year].shape[0])
-        matches_previous_year = gpd.sjoin(left_df=global_datasets_postprocessed[year], right_df=global_datasets[previous_year], how="inner").tempid
+
+        if use_buffer:
+            # Adding a buffer for more generous postprocessing
+            buffered_current_year = global_datasets_postprocessed[year].copy()
+            buffered_current_year['geometry'] = buffered_current_year['geometry'].buffer(buffer_size)
+            matches_previous_year = gpd.sjoin(
+                left_df=buffered_current_year,
+                right_df=global_datasets[previous_year],
+                how="inner"
+            ).tempid
+
+        else:
+            matches_previous_year = gpd.sjoin(
+                left_df=global_datasets_postprocessed[year],
+                right_df=global_datasets[previous_year],
+                how="inner"
+            ).tempid
+
 
     if i != len(global_datasets.keys())-1:
         following_year = str(int(year) + 1)
         global_datasets_postprocessed[year]['tempid'] = range(global_datasets_postprocessed[year].shape[0])
-        matches_following_year = gpd.sjoin(left_df=global_datasets_postprocessed[year], right_df=global_datasets[following_year], how="inner").tempid
+
+        if use_buffer:
+            # Adding a buffer for more generous postprocessing
+            buffered_current_year = global_datasets_postprocessed[year].copy()
+            buffered_current_year['geometry'] = buffered_current_year['geometry'].buffer(buffer_size)
+            matches_following_year = gpd.sjoin(
+                left_df=buffered_current_year,
+                right_df=global_datasets[following_year],
+                how="inner"
+            ).tempid
+
+        else:
+            matches_following_year = gpd.sjoin(
+                left_df=global_datasets_postprocessed[year],
+                right_df=global_datasets[following_year],
+                how="inner"
+            ).tempid
 
     if (previous_year is not None) and (following_year is not None):
         subset = [any(tup) for tup in zip(global_datasets_postprocessed[year].tempid.isin(matches_previous_year), global_datasets_postprocessed[year].tempid.isin(matches_following_year))]
@@ -90,4 +128,8 @@ for year in global_datasets_postprocessed.keys():
 
 #Saving the postprocessed .gpkg datasets
 for year, dataset in global_datasets_postprocessed.items():
-    dataset.to_file('./data/segmentation/inference_data/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed.gpkg'.format(year, year), driver='GPKG')
+    if use_buffer:
+        dataset.to_file('./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed.gpkg'.format(year, year), driver='GPKG')
+
+    else:
+        dataset.to_file('./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed_nobuffer.gpkg'.format(year, year), driver='GPKG')
