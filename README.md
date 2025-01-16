@@ -31,17 +31,16 @@ This repository provides instructions for creating a panel dataset of tropical m
    ```
 
 ### 2. Install required packages
-Set up a *conda* environment. This can take a minute.
+Set up a *conda* environment. This can take a few minutes.
    ```bash
    conda env create -f environment.yml
    conda activate mining
    ```
-You will also need to install [MMSegmentation](https://mmsegmentation.readthedocs.io/en/main/get_started.html) and [CUDA](https://docs.NVIDIA.com/cuda/cuda-installation-guide-linux/) (see Steps 5 and 6).
 
 ### 3. Set up data access
 
-- Add your own [*Planet/NICFI*](https://www.planet.com/nicfi/) **API key** to the `.env` file under `API_KEY`.
-- Our **ground truth** dataset combines mining polygons from [*Maus et al.*](https://www.nature.com/articles/s41597-022-01547-4) and [*Tang and Werner*](https://www.nature.com/articles/s43247-023-00805-6) and is available [here](https://owncloud.wu.ac.at/index.php/s/QHr5K9w3HN97bJm/download/mining_polygons_combined.gpkg) or via:
+Add your own [*Planet/NICFI*](https://www.planet.com/nicfi/) API key to the `.env` file under `API_KEY`.
+Our ground truth dataset combines mining polygons from [*Maus et al.*](https://www.nature.com/articles/s41597-022-01547-4) and [*Tang and Werner*](https://www.nature.com/articles/s43247-023-00805-6) and is available [here](https://owncloud.wu.ac.at/index.php/s/QHr5K9w3HN97bJm/download/mining_polygons_combined.gpkg) or via the following command.
    ```bash
    cd data/segmentation/
    wget https://owncloud.wu.ac.at/index.php/s/QHr5K9w3HN97bJm/download/mining_polygons_combined.gpkg
@@ -50,19 +49,21 @@ You will also need to install [MMSegmentation](https://mmsegmentation.readthedoc
 
 *Note:* You may also use other `.gpkg` datasets, provided they are covered by Planet/NICFI. Ensure the file path is updated, and that the dataset is large enough to use for training.
 
+*Note:* As things currently stand, the Planet NICFI program will be discontinued on January 23, 2025.
+
 ### 4. Generate segmentation datasets
 Generate image data for training and prediction by running the following command for each year.
 The 2019 data will be used for training, with segmentation masks created exclusively for this year. Images are  generated for all years to enable prediction.
 The images and segmentation masks can be found at `/data/segmentation/YOUR_YEAR/img_dir/` and `/data/segmentation/2019/ann_dir/` respectively.
 There are two modes:
 
-- **Regular Mode**: Processes the *complete dataset* (this can take one to two days):
+- **Regular Mode**: Processes the *complete dataset*, which can take one to two days.
    ```bash
    for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
      python3 0_segmentation_dataset_generation.py --year=$year &
    done
    ```
-- **Demo Mode**: Processes a smaller *demo dataset*. Demo mode is useful for testing and debugging:
+- **Demo Mode**: Processes a smaller *demo dataset*. Demo mode is useful for testing and debugging.
    ```bash
    for year in '2016' '2019' '2024'; do
      python3 0_segmentation_dataset_generation.py --year=$year --demo &
@@ -70,11 +71,12 @@ There are two modes:
    ```
 
 *Note:* You may choose to run on a subset of sample years, but should always include 2019, which is required for training.
+
 *Note:* The composite satellite images are selected based on their clarity, as stored in `data/segmentation/cloudfree_quads_info.csv`. Scripts to obtain this metadata are located in `scripts`.
 
 ### 5. Set up *MMSegmentation*
-- Follow the installation guide for [*MMSegmentation*](https://mmsegmentation.readthedocs.io/en/main/get_started.html).
-- Add the 2019 mining dataset you generated to the *MMSegmentation* training datasets as per these [instructions](https://mmsegmentation.readthedocs.io/en/main/advanced_guides/add_datasets.html).
+Follow the installation guide for [*MMSegmentation*](https://mmsegmentation.readthedocs.io/en/main/get_started.html).
+Add the 2019 mining dataset you generated to the *MMSegmentation* training datasets as per these [instructions](https://mmsegmentation.readthedocs.io/en/main/advanced_guides/add_datasets.html).
 
 ### 6. Install *NVIDIA CUDA*
 Processing and training relies on an *NVIDIA* GPU with *CUDA* support. Training benefits from two or more high-performance GPUs (such as the NVIDIA A30); a single GPU is sufficient for prediction.
@@ -88,28 +90,39 @@ Train your selected model on the 2019 mining dataset using *MMSegmentation* by f
 *Note:* The demo dataset is too small for effective model training.
 
 ### 8. Generate predicted polygons
-- Add your model config and checkpoints to the `.env` file under `MODEL_CONFIG` and `MODEL_CHECKPOINT`.
-- To generate a `.gpkg` dataset with predicted polygons for each year, run the following script in one of the modes:
-  - **Regular Mode**: Predict on the full `.gpkg` dataset. This can take one to two days.
-   ```bash
-   for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
-     python3 1_gpkg_dataset_generation.py --year=$year &
-   done
-   ```
-  - **Demo Mode**:  Predict on a demo dataset.
-   ```bash
-   for year in '2016' '2019' '2024'; do
-     python3 1_gpkg_dataset_generation.py --year=$year --demo &
-   done
-   ```
+Add your model config and checkpoints to the `.env` file under `MODEL_CONFIG` and `MODEL_CHECKPOINT`.
+To generate a `.gpkg` dataset with predicted polygons for each year, run the script in one of the following modes:
+- **Regular Mode**: Predict on the full `.gpkg` dataset, which can take one to two days.
+    ```bash
+    for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
+      python3 1_gpkg_dataset_generation.py --year=$year &
+    done
+    ```
+- **Demo Mode**:  Predict on a demo dataset.
+    ```bash
+    for year in '2016' '2019' '2024'; do
+      python3 1_gpkg_dataset_generation.py --year=$year --demo &
+    done
+    ```
 
 ### 9. Postprocess the Predictions
-Run the post-processing script to refine predictions. This step is executed by the CPU and should only take a few minutes.
+Run the post-processing script to refine the predictions. This step is performed on the CPU and typically takes only a few minutes. 
+You can customize the behavior of the post-processing by adjusting the buffer size or disabling it entirely using the provided flags.
+Run the script in one of the following modes:
+- **Regular Mode**: Executes with a default buffer size of approximately 50 meters.  
   ```bash
-    python3 2_gpkg_dataset_postprocessing.py
+  python3 2_gpkg_dataset_postprocessing.py
+  ```
+- **Custom Buffer Size**: Specify a buffer size of your choice.  
+  ```bash
+  python3 2_gpkg_dataset_postprocessing.py --buffer_size=150
+  ```
+- **No Buffer**: Disables the buffer entirely.  
+  ```bash
+  python3 2_gpkg_dataset_postprocessing.py --use_buffer=False
   ```
 
-Now you can access your post-processed predictions in `data/segmentation/data/segmentation/YOUR_YEAR/gpkg/`.
+Post-processed predictions can be accessed in `data/segmentation/data/segmentation/YOUR_YEAR/gpkg/`.
 
 ---
 

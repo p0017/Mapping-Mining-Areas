@@ -1,15 +1,21 @@
 import numpy as np
 import geopandas as gpd
+from argparse import ArgumentParser
 
 #This script is used for the postprocessing of .gpkg polygon datasets.
 #It removes any polygons that do not have an intersecting polygon in the previous or subsequent year.
 #This means that the years 2016 and 2024, which only have a single ‘neighboring’ year, which we can compare the polygons to, feature a lower number of polygons.
 #Further, it assigns the correct country name and iso3 code to every polygon.
 
-# Optional buffer for more generous postprocessing
-use_buffer = True
+parser = ArgumentParser()
+parser.add_argument('-b', '--use_buffer', required=False, default=True, type=bool, help="Use buffer for postprocessing.")
+parser.add_argument('-s', '--buffer_size', required=False, default=50, type=float, help="Rough estimate of buffer size in meters.")
+
+args = parser.parse_args()
+use_buffer = args.use_buffer
+buffer_size = args.buffer_size / 1e5
+# Optional buffer for more generous postprocessing and minimization of potential bias
 # 0.0005 corresponds to roughly 50 meters, increase for even more generous postprocessing
-buffer_size = 0.0005 
 
 
 global_datasets = {}
