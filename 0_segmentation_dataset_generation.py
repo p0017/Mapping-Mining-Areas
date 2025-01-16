@@ -131,7 +131,7 @@ gdf = gdf[~gdf.geometry.contains(bad_centroid)]
 
 gdf.reset_index(drop=True, inplace=True)
 
-PLANET_API_KEY = 'YOUR_API_KEY_HERE'
+PLANET_API_KEY = os.environ['API_KEY']
 # setup Planet base URL
 API_URL = "https://api.planet.com/basemaps/v1/mosaics"
 # setup session

@@ -378,26 +378,22 @@ for split in ['train/', 'test/', 'val/']:
             # in some cases, a polygon may be split up into a multiple polygons making up a multipolygon wenn calling simplify
             if type(poly_simple) == shapely.geometry.multipolygon.MultiPolygon:
                 for geom in poly_simple.geoms:
-                    # skipping tiny polygons
-                    if geom.area > 50:
-                        # getting the polygon coordinates inside the bbox coordinate system
-                        # and adding the bbox offset
-                        x,y = geom.exterior.xy
-                        x = [(x_i * bbox_scaling_factor) + x_offset for x_i in x]
-                        y = [(y_i * bbox_scaling_factor) + y_offset for y_i in y]
-                        x_poly.append(x)
-                        y_poly.append(y)
-            # processing polygons which have not been split up
-            else:
-                # skipping tiny polygons
-                if poly_simple.area > 50:
                     # getting the polygon coordinates inside the bbox coordinate system
                     # and adding the bbox offset
-                    x,y = poly_simple.exterior.xy
+                    x,y = geom.exterior.xy
                     x = [(x_i * bbox_scaling_factor) + x_offset for x_i in x]
                     y = [(y_i * bbox_scaling_factor) + y_offset for y_i in y]
                     x_poly.append(x)
                     y_poly.append(y)
+            # processing polygons which have not been split up
+            else:
+                # getting the polygon coordinates inside the bbox coordinate system
+                # and adding the bbox offset
+                x,y = poly_simple.exterior.xy
+                x = [(x_i * bbox_scaling_factor) + x_offset for x_i in x]
+                y = [(y_i * bbox_scaling_factor) + y_offset for y_i in y]
+                x_poly.append(x)
+                y_poly.append(y)
 
         id_position = np.where((gdf_pred['id'] == id) == True)[0][0]
         gdf_pred.at[id_position, 'x_poly'] = x_poly
