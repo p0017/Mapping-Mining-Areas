@@ -124,6 +124,11 @@ gdf = gdf[in_nicfi]
 nicfi_subset = [False if iso in iso_non_nicfi else True for iso in gdf['ISO3_CODE']]
 gdf = gdf[nicfi_subset]
 
+# This is the centroid of a really large and really badly delineated polygon contained in the ground truth dataset
+# We will remove this polygon from the dataset
+bad_centroid = shapely.geometry.Point(-2.02629645, 5.8978455)
+gdf = gdf[~gdf.geometry.contains(bad_centroid)]
+
 gdf.reset_index(drop=True, inplace=True)
 
 PLANET_API_KEY = 'YOUR_API_KEY_HERE'
