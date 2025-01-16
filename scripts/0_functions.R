@@ -4,6 +4,7 @@ library("httr")
 library("sf")
 library("dplyr")
 
+readRenviron(".env")
 API_KEY <- Sys.getenv("API_KEY")
 API_URL <- "https://api.planet.com/basemaps/v1/mosaics"
 BASEMAPS_ID <- list(

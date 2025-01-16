@@ -55,7 +55,7 @@ df_sel |> group_by(year) |> summarise(sum(is.na(badness_avg)))
 
 # Prepare a CSV with the download link
 df_sel |>
-  filter(!id_shape %in% c("GHA11078")) |> # Filter out a *dirty* polygon w/ overlaps
+  # filter(!id_shape %in% c("GHA11078")) |> # Filter out a *dirty* polygon w/ overlaps
   select(id_shape, year, basemap, quad) |> 
   mutate(link = get_link(basemap, quad)) |> 
   write.csv("data/segmentation/cloudfree_quads_info.csv", row.names = FALSE)
