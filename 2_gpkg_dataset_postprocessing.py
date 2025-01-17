@@ -22,8 +22,12 @@ global_datasets = {}
 
 #Reading the predictions for every year
 for year in np.arange(2016, 2025).astype(str):
+    print('Reading predictions for', year)
+
     path = './data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}.gpkg'.format(year, year)
     global_data = gpd.read_file(path)
+    assert (type(global_data) == gpd.geodataframe.GeoDataFrame), "global_data is not a GeoDataFrame."
+
     global_data = global_data.to_crs('EPSG:4326')
 
     for column in ['AREA', 'level_0', 'level_1', 'id', 'COUNTRY_NAME', 'ISO3_CODE']:
@@ -42,6 +46,7 @@ for year, dataset in global_datasets.items():
 #Removing any polygons that do not have an intersecting polygon in the previous or subsequent year
 for i in range(len(global_datasets.keys())):
     year = list(global_datasets.keys())[i]
+    print('Postprocessing', year)
     previous_year = None
     following_year = None
 
@@ -109,6 +114,7 @@ countries = countries.to_crs('EPSG:4326')
 
 #Assigning the correct country names and iso3 codes by comparing the polygons to the NaturalEarth dataset
 for year in global_datasets_postprocessed.keys():
+    print('Assigning country names and iso3 codes for', year)
     global_data = global_datasets_postprocessed[year]
 
     a = global_data['geometry'].apply(lambda x: x.intersects(countries.geometry))
@@ -136,6 +142,8 @@ for year in global_datasets_postprocessed.keys():
 for year, dataset in global_datasets_postprocessed.items():
     if use_buffer:
         dataset.to_file('./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed.gpkg'.format(year, year), driver='GPKG')
+        print('Postprocessed predictions with buffer saved to ./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed.gpkg'.format(year, year))
 
     else:
         dataset.to_file('./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed_nobuffer.gpkg'.format(year, year), driver='GPKG')
+        print('Postprocessed predictions without buffer saved to ./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed.gpkg'.format(year, year))

@@ -65,8 +65,8 @@ Note: The ann_dir is only required for 2019, as the model was trained on this ye
 pd.options.mode.chained_assignment = None
 
 parser = ArgumentParser()
-parser.add_argument('-y', '--year', required=True, help="Year to process.")
-parser.add_argument('-d', '--demo',  action='store_true', help="Set this flag to run the script in demo mode.")
+parser.add_argument('-y', '--year', required=True, type=str, help="Year to process.")
+parser.add_argument('-d', '--demo', required=False, default=False, type=bool, help="Set this flag to run the script in demo mode.")
 
 # Eight options for year, from '2016' up to '2024'
 # If one wants to include data of more recent years, the corresponding Planet parameter needs to be added to the nicfi_urls dict below
@@ -96,6 +96,7 @@ countries = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
 # Loading a country code dataset
 # Will be deprecated sometime in the future
 
+assert (type(gdf) == gpd.geodataframe.GeoDataFrame), "gdf is not a GeoDataFrame."
 a = gdf['geometry'].apply(lambda x: x.intersects(countries.geometry))
 gdf['ISO3_CODE'] = (a * countries['iso_a3']).replace('', np.nan).ffill(axis='columns').iloc[:, -1]
 gdf['COUNTRY_NAME'] = (a * countries['name']).replace('', np.nan).ffill(axis='columns').iloc[:, -1]
@@ -132,15 +133,18 @@ gdf = gdf[~gdf.geometry.contains(bad_centroid)]
 gdf.reset_index(drop=True, inplace=True)
 
 PLANET_API_KEY = os.environ['API_KEY']
+assert (type(PLANET_API_KEY) == str), "API_KEY is not a string."
 # setup Planet base URL
 API_URL = "https://api.planet.com/basemaps/v1/mosaics"
 # setup session
 session = requests.Session()
 # authenticate
+print('Please note that, as things currently stand, the Planet NICFI program is scheduled to be discontinued on January 23, 2025.')
+print('So authentication with your Planet API key may fail, and the script may therefore not work as intended. \n')
 session.auth = (PLANET_API_KEY, "")
 
 print()
-print('processing', year)
+print('Processing', year)
 
 # This is the dict in which one needs to add the corresponding Planet parameters if one wants to include more recent data
 NICFI_URLS = {'2016':'planet_medres_normalized_analytic_2016-06_2016-11_mosaic',
@@ -318,7 +322,7 @@ def process_cloudfree(j:int, gdf:gpd.geodataframe.GeoDataFrame, cloudfree_quads_
             tile_urls[i] = cloudfree_quad_url + PLANET_API_KEY
         else:
             # Print a message if no cloudfree tile is found
-            print('No cloudfree tile found for', tile_id, 'therefore leaving it as is')
+            print('No cloudfree replacement found for tile', tile_id, 'therefore leaving it as is.')
 
     # Update the tile URLs in the GeoDataFrame
     gdf['tile_urls'][j] = tile_urls
@@ -600,8 +604,8 @@ if has_hand_validated_indices:
     gdf_test = gdf[gdf['id'].isin(HAND_VALIDATED_IDS)]
     gdf_test.reset_index(drop=True, inplace=True)
 
-print('train', len(gdf_train), 'test', len(gdf_test), 'val', len(gdf_val))
-print('preparing and saving data')
+print('Train set size:', len(gdf_train), 'Test set size:', len(gdf_test), 'Validation set size:', len(gdf_val))
+print('Preparing and saving data.')
 parallel_prepare_and_save(gdf_train, set_type='train')
 parallel_prepare_and_save(gdf_val, set_type='val')
 
@@ -610,7 +614,7 @@ if has_hand_validated_indices:
 
 
 if demo:
-    print(year, 'demo done.')
+    print(year, 'Demo done.')
     
 else:
-    print(year, 'done')
+    print(year, 'Done.')
