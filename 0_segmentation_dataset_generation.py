@@ -234,7 +234,8 @@ def process_tile(j:int, gdf:gpd.geodataframe.GeoDataFrame, session:requests.Sess
             gdf['tile_bboxes'][j] = bboxes
 
     except json.JSONDecodeError as e:
-        print('Requested tile which is not covered by NICFI', e)
+        print('Caught error when reading JSON response from Planet', e)
+        print('Response', res.content)
         pass
 
 
@@ -260,8 +261,8 @@ def parallel_process_tile(gdf:gpd.geodataframe.GeoDataFrame, session:requests.Se
 
     parallel_process_tile(gdf, session)
     """
-
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    # Planet API requests are rate limited, so using only one worker is highly recommended
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [
             executor.submit(process_tile, j, gdf, session)
             for j in range(len(gdf))
@@ -351,7 +352,7 @@ def parallel_process_cloudfree(gdf:gpd.geodataframe.GeoDataFrame, cloudfree_quad
     parallel_process_cloudfree(gdf, cloudfree_quads_this_year)
     """
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = [
             executor.submit(process_cloudfree, j, gdf, cloudfree_quads_this_year)
             for j in range(len(gdf))
@@ -549,9 +550,9 @@ def parallel_prepare_and_save(gdf: gpd.geodataframe.GeoDataFrame, set_type: str)
     """
 
     print('Processing', set_type)
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = [
-            executor.submit(prepare_and_save, k, gdf, set_type, year)
+            executor.submit(prepare_and_save, k, gdf, set_type)
             for k in range(len(gdf))
         ]
 
@@ -603,8 +604,10 @@ has_hand_validated_indices = len(non_hand_validated_indices) < len(gdf)
 if has_hand_validated_indices:
     gdf_test = gdf[gdf['id'].isin(HAND_VALIDATED_IDS)]
     gdf_test.reset_index(drop=True, inplace=True)
+    print('Train set size:', len(gdf_train), 'Test set size:', len(gdf_test), 'Validation set size:', len(gdf_val))
+else:
+    print('Train set size:', len(gdf_train), 'Validation set size:', len(gdf_val))
 
-print('Train set size:', len(gdf_train), 'Test set size:', len(gdf_test), 'Validation set size:', len(gdf_val))
 print('Preparing and saving data.')
 parallel_prepare_and_save(gdf_train, set_type='train')
 parallel_prepare_and_save(gdf_val, set_type='val')

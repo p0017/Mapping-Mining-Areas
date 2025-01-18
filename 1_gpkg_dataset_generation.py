@@ -249,7 +249,8 @@ def process_tile(j:int, gdf:gpd.geodataframe.GeoDataFrame, session:requests.Sess
             gdf['tile_bboxes'][j] = bboxes
 
     except json.JSONDecodeError as e:
-        print('Requested tile which is not covered by NICFI', e)
+        print('Caught error when reading JSON response from Planet', e)
+        print('Response', res.content)
         pass
 
 
@@ -275,8 +276,8 @@ def parallel_process_tile(gdf:gpd.geodataframe.GeoDataFrame, session:requests.Se
 
     parallel_process_tile(gdf, session)
     """
-
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    # Planet API requests are rate limited, so using only one worker is highly recommended
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [
             executor.submit(process_tile, j, gdf, session)
             for j in range(len(gdf))

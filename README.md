@@ -66,7 +66,7 @@ There are two modes:
 - **Demo Mode**: Processes a smaller *demo dataset*. Demo mode is useful for testing and debugging.
    ```bash
    for year in '2016' '2019' '2024'; do
-     python3 0_segmentation_dataset_generation.py --year=$year --demo &
+     python3 0_segmentation_dataset_generation.py --year=$year --demo='True' &
    done
    ```
 
@@ -106,9 +106,8 @@ To generate a `.gpkg` dataset with predicted polygons for each year, run the scr
     ```
 
 ### 9. Postprocess the Predictions
-Run the post-processing script to refine the predictions. This step is performed on the CPU and typically takes only a few minutes. 
-You can customize the behavior of the post-processing by adjusting the buffer size or disabling it entirely using the provided flags.
-Run the script in one of the following modes:
+Run the post-processing script to refine the predictions. This step is performed on the CPU and typically takes only a few minutes. You can customize the behavior of the post-processing by adjusting the buffer size or disabling it entirely using the provided flags. Post-processed predictions can be accessed in `data/segmentation/data/segmentation/YOUR_YEAR/gpkg/`.
+There are different modes:
 - **Regular Mode**: Executes with a default buffer size of approximately 50 meters.  
   ```bash
   python3 2_gpkg_dataset_postprocessing.py
@@ -121,8 +120,6 @@ Run the script in one of the following modes:
   ```bash
   python3 2_gpkg_dataset_postprocessing.py --use_buffer=False
   ```
-
-Post-processed predictions can be accessed in `data/segmentation/data/segmentation/YOUR_YEAR/gpkg/`.
 
 ---
 
