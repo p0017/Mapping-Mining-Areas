@@ -101,7 +101,7 @@ To generate a `.gpkg` dataset with predicted polygons for each year, run the scr
 - **Demo Mode**:  Predict on a demo dataset.
     ```bash
     for year in '2016' '2019' '2024'; do
-      python3 1_gpkg_dataset_generation.py --year=$year --demo &
+      python3 1_gpkg_dataset_generation.py --year=$year --demo='True' &
     done
     ```
 
