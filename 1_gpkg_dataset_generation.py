@@ -6,6 +6,7 @@ import shapely.geometry
 import shapely.ops
 import random
 import os
+import time
 import cv2
 import requests
 import torch
@@ -76,6 +77,7 @@ pd.options.mode.chained_assignment = None
 parser = ArgumentParser()
 parser.add_argument('-y', '--year', required=True, type=str, help="Year to process.")
 parser.add_argument('-d', '--demo', required=False, default=False, type=bool, help="Set this flag to run the script in demo mode.")
+parser.add_argument('-t', '--threshold', required=True, type=float, help="Probability threshold for the predictions.")
 
 # Eight options for year, from '2016' up to '2024'
 # If one wants to include data of more recent years, the corresponding Planet parameter needs to be added to the nicfi_urls dict below
@@ -83,6 +85,9 @@ parser.add_argument('-d', '--demo', required=False, default=False, type=bool, he
 args = parser.parse_args()
 year = args.year
 demo = args.demo
+thres = args.threshold
+
+print('Using threshold:', thres)
 
 if demo:
     print("Running in demo mode.")
@@ -229,8 +234,31 @@ def process_tile(j:int, gdf:gpd.geodataframe.GeoDataFrame, session:requests.Sess
 
             # Accessing tiles using metadata from mosaic
             quads_url = "{}/{}/quads".format(API_URL, MOSAIC_ID)
-            res = session.get(quads_url, params=search_parameters, stream=True)
-            quads = res.json()
+
+            # Retry logic with exponential backoff
+            max_retries = 10
+            backoff_factor = 0.01  # Start with 10 milliseconds
+            for attempt in range(max_retries):
+                try:
+                    res = session.get(quads_url, params=search_parameters, stream=True)
+                    quads = res.json()
+                    break  # Exit the loop if the request is successful
+
+                except json.JSONDecodeError as e:
+                    print(f"Caught error when reading JSON response from Planet on attempt {attempt + 1}: {e}")
+                    print('Response:', res.content)
+                    time.sleep(backoff_factor)
+                    backoff_factor *= 2  # Exponential backoff
+
+                except requests.exceptions.RequestException as e:
+                    print(f"Request failed on attempt {attempt + 1}: {e}")
+                    time.sleep(backoff_factor)
+                    backoff_factor *= 2  # Exponential backoff
+                    
+            else:
+                print("Max retries reached. Exiting.")
+                return  # Exit the function if max retries are reached
+
             items = quads['items']
 
             # Getting all required tile IDs and URLs
@@ -251,6 +279,10 @@ def process_tile(j:int, gdf:gpd.geodataframe.GeoDataFrame, session:requests.Sess
     except json.JSONDecodeError as e:
         print('Caught error when reading JSON response from Planet', e)
         print('Response', res.content)
+        pass
+        
+    except requests.exceptions.RequestException as e:
+        print('Request failed', e)
         pass
 
 
@@ -336,14 +368,35 @@ for split in ['train/', 'test/', 'val/']:
     img_names = os.listdir('./data/segmentation/{}/img_dir/{}/'.format(year, split))
     for img_name in img_names:
         # processing all data from all splits
-
         # loading the image and getting the models predictions
-        img = mmcv.imread('./data/segmentation/{}/img_dir/{}/{}'.format(year, split, img_name))
-        pred = inference_model(model, img).pred_sem_seg.values()[0][0]
-        # predictions need to be passed back to the cpu for further processing
-        pred = pred.cpu().detach().numpy()
+        # Retry logic with exponential backoff
+        max_retries = 10
+        backoff_factor = 0.01  # Start with 10 milliseconds
+
+        for attempt in range(max_retries):
+            try:
+                img = mmcv.imread('./data/segmentation/{}/img_dir/{}/{}'.format(year, split, img_name))
+                pred_logits = inference_model(model, img).seg_logits.values()[0][1]
+                pred_logits = pred_logits.cpu().detach().numpy()
+                break  # Exit the loop if successful
+
+            except Exception as e:
+                print(f'Caught Error on attempt {attempt + 1}: {e}')
+                time.sleep(backoff_factor)
+                backoff_factor *= 2  # Exponential backoff
+
+        else:
+            print("Max retries reached. Skipping image {}.".format(img_name))
+            pass
+        
+        #predictions need to be passed back to the cpu for further processing
+        
+        pred_logits = pred_logits.T
+        # transforming the logits into probabilities using the sigmoid function
+        pred = 1 / (1 + np.exp(-pred_logits))
+        # applying the threshold to the predictions
+        pred = np.where(pred >= thres, 1, 0)
         pred = postprocess(pred)
-        pred = pred.T
 
         # using findContours for processing the segmentation predictions into polygon coordinates
         borders, _ = cv2.findContours(pred.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

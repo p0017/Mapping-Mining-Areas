@@ -47,9 +47,9 @@ Our ground truth dataset combines mining polygons from [*Maus et al.*](https://w
    cd ../../
    ```
 
-*Note:* You may also use other `.gpkg` datasets, provided they are covered by Planet/NICFI. Ensure the file path is updated, and that the dataset is large enough to use for training.
+*Note:* You may also use other `.gpkg` polygon datasets, provided they are covered by Planet/NICFI. Ensure the file path is updated, and that the dataset is large enough to use for training.
 
-*Note:* As things currently stand, the Planet NICFI program will be discontinued on January 23, 2025.
+*Note:* The Planet NICFI program is scheduled to be discontinued on January 23, 2025. As a result, the scripts below may not work as expected after this date.
 
 ### 4. Generate segmentation datasets
 Generate image data for training and prediction by running the following command for each year.
@@ -90,25 +90,25 @@ Train your selected model on the 2019 mining dataset using *MMSegmentation* by f
 *Note:* The demo dataset is too small for effective model training.
 
 ### 8. Generate predicted polygons
-Add your model config and checkpoints to the `.env` file under `MODEL_CONFIG` and `MODEL_CHECKPOINT`.
+Add your model configuration and checkpoints to the `.env` file under `MODEL_CONFIG` and `MODEL_CHECKPOINT`. You can customize the predictions by adjusting the threshold, which determines the 'probability of mine' at the model output for classifying a pixel as part of a mining area. For example, a threshold of 0.6 would result in smaller polygons with fewer false positives but more false negatives, while a threshold of 0.4 would produce larger polygons with more false positives but fewer false negatives. A threshold of 0.5 offers a balanced choice, but the ideal threshold depends on your specific use case.
 To generate a `.gpkg` dataset with predicted polygons for each year, run the script in one of the following modes:
 - **Regular Mode**: Predict on the full `.gpkg` dataset, which can take one to two days.
     ```bash
     for year in '2016' '2017' '2018' '2019' '2020' '2021' '2022' '2023' '2024'; do
-      python3 1_gpkg_dataset_generation.py --year=$year &
+      python3 1_gpkg_dataset_generation.py --year=$year --threshold=0.5 &
     done
     ```
 - **Demo Mode**:  Predict on a demo dataset.
     ```bash
     for year in '2016' '2019' '2024'; do
-      python3 1_gpkg_dataset_generation.py --year=$year --demo='True' &
+      python3 1_gpkg_dataset_generation.py --year=$year --threshold=0.5 --demo='True' &
     done
     ```
 
 ### 9. Postprocess the Predictions
 Run the post-processing script to refine the predictions. This step is performed on the CPU and typically takes only a few minutes. You can customize the behavior of the post-processing by adjusting the buffer size or disabling it entirely using the provided flags. Post-processed predictions can be accessed in `data/segmentation/data/segmentation/YOUR_YEAR/gpkg/`.
 There are different modes:
-- **Regular Mode**: Executes with a default buffer size of approximately 50 meters.  
+- **Regular Mode**: Executes with a default buffer size of approximately 100 meters.  
   ```bash
   python3 2_gpkg_dataset_postprocessing.py
   ```

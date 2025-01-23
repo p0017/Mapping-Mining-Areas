@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser()
 parser.add_argument('-b', '--use_buffer', required=False, default=True, type=bool, help="Use buffer for postprocessing.")
-parser.add_argument('-s', '--buffer_size', required=False, default=50, type=float, help="Rough estimate of buffer size in meters.")
+parser.add_argument('-s', '--buffer_size', required=False, default=100, type=float, help="Rough estimate of buffer size in meters.")
 
 args = parser.parse_args()
 use_buffer = args.use_buffer

@@ -7,6 +7,7 @@ import shapely.geometry
 import shapely.ops
 import random
 import os
+import time
 import skimage
 import cv2
 import requests
@@ -214,8 +215,31 @@ def process_tile(j:int, gdf:gpd.geodataframe.GeoDataFrame, session:requests.Sess
 
             # Accessing tiles using metadata from mosaic
             quads_url = "{}/{}/quads".format(API_URL, MOSAIC_ID)
-            res = session.get(quads_url, params=search_parameters, stream=True)
-            quads = res.json()
+
+            # Retry logic with exponential backoff
+            max_retries = 10
+            backoff_factor = 0.01  # Start with 10 milliseconds
+            for attempt in range(max_retries):
+                try:
+                    res = session.get(quads_url, params=search_parameters, stream=True)
+                    quads = res.json()
+                    break  # Exit the loop if the request is successful
+
+                except json.JSONDecodeError as e:
+                    print(f"Caught error when reading JSON response from Planet on attempt {attempt + 1}: {e}")
+                    print('Response:', res.content)
+                    time.sleep(backoff_factor)
+                    backoff_factor *= 2  # Exponential backoff
+
+                except requests.exceptions.RequestException as e:
+                    print(f"Request failed on attempt {attempt + 1}: {e}")
+                    time.sleep(backoff_factor)
+                    backoff_factor *= 2  # Exponential backoff
+                    
+            else:
+                print("Max retries reached. Exiting.")
+                return  # Exit the function if max retries are reached
+
             items = quads['items']
 
             # Getting all required tile IDs and URLs
@@ -236,6 +260,10 @@ def process_tile(j:int, gdf:gpd.geodataframe.GeoDataFrame, session:requests.Sess
     except json.JSONDecodeError as e:
         print('Caught error when reading JSON response from Planet', e)
         print('Response', res.content)
+        pass
+        
+    except requests.exceptions.RequestException as e:
+        print('Request failed', e)
         pass
 
 
@@ -408,7 +436,33 @@ def prepare_and_save(k:int, gdf:gpd.geodataframe.GeoDataFrame, set_type:str):
             filename = './data/tiff_tiles/{}/{}.tiff'.format(year, id)
             # checks if file already exists
             if not os.path.isfile(filename):
-                urllib.request.urlretrieve(url, filename)
+
+                # Retry logic with exponential backoff
+                max_retries = 10
+                backoff_factor = 0.01  # Start with 10 milliseconds
+                for attempt in range(max_retries):
+                    try:
+                        urllib.request.urlretrieve(url, filename)
+                        break  # Exit the loop if the request is successful
+
+                    except urllib.error.HTTPError as e:
+                        print(f'Caught HTTPError on attempt {attempt + 1}: {e}')
+                        time.sleep(backoff_factor)
+                        backoff_factor *= 2  # Exponential backoff
+
+                    except urllib.error.URLError as e:
+                        print(f'Caught URLError on attempt {attempt + 1}: {e}')
+                        time.sleep(backoff_factor)
+                        backoff_factor *= 2
+
+                    except OSError as e:
+                        print(f'Caught OSError on attempt {attempt + 1}: {e}')
+                        time.sleep(backoff_factor)
+                        backoff_factor *= 2 
+
+                else:
+                    print("Max retries reached. Exiting.")
+                    return  # Exit the function if max retries are reached
 
         # getting all secondary polygons which are located on one of the tiles the primary polygon is located on
         # and subsetting the dataset accordingly
@@ -462,9 +516,25 @@ def prepare_and_save(k:int, gdf:gpd.geodataframe.GeoDataFrame, set_type:str):
 
         # merging all required tiles into a mosaic
         tile_mosaic = []
-        for id in gdf['tile_ids'][k]:
-            img = rasterio.open('./data/tiff_tiles/{}/{}.tiff'.format(year, id))
-            tile_mosaic.append(img)
+
+        # Retry logic with exponential backoff
+        max_retries = 10
+        backoff_factor = 0.01  # Start with 10 milliseconds
+        for attempt in range(max_retries):
+            try:
+                for id in gdf['tile_ids'][k]:
+                    img = rasterio.open('./data/tiff_tiles/{}/{}.tiff'.format(year, id))
+                    tile_mosaic.append(img)
+                break # Exit the loop if the loading is successful
+
+            except Exception as e:
+                print(f'Caught Error on attempt {attempt + 1}: {e}')
+                time.sleep(backoff_factor)
+                backoff_factor *= 2  # Exponential backoff
+
+        else:
+            print("Max retries reached. Exiting.")
+            return  # Exit the function if max retries are reached
 
         # we have got four color channels, red, green, blue, and NIR
         mosaic, _ = rasterio.merge.merge(tile_mosaic, indexes=[1,2,3,4])
@@ -480,6 +550,10 @@ def prepare_and_save(k:int, gdf:gpd.geodataframe.GeoDataFrame, set_type:str):
         rgb_resized = np.array(rgb_resized).T
         if not cv2.imwrite('./data/segmentation/{}/img_dir/{}/{}.png'.format(year, set_type, gdf['id'][k]), 255*rgb_resized):
             print("Failed to save image of polygon", k)
+
+        # Closing the tiff files to free up memory
+        for img in tile_mosaic:
+            img.close()
 
         if year == '2019':
             # turning the polygons into a target array of zeros and ones
