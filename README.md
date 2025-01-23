@@ -55,6 +55,7 @@ Our ground truth dataset combines mining polygons from [*Maus et al.*](https://w
 Generate image data for training and prediction by running the following command for each year.
 The 2019 data will be used for training, with segmentation masks created exclusively for this year. Images are  generated for all years to enable prediction.
 The images and segmentation masks can be found at `/data/segmentation/YOUR_YEAR/img_dir/` and `/data/segmentation/2019/ann_dir/` respectively.
+
 There are two modes:
 
 - **Regular Mode**: Processes the *complete dataset*, which can take one to two days.
@@ -90,7 +91,8 @@ Train your selected model on the 2019 mining dataset using *MMSegmentation* by f
 *Note:* The demo dataset is too small for effective model training.
 
 ### 8. Generate predicted polygons
-Add your model configuration and checkpoints to the `.env` file under `MODEL_CONFIG` and `MODEL_CHECKPOINT`. You can customize the predictions by adjusting the threshold, which determines the 'probability of mine' at the model output for classifying a pixel as part of a mining area. For example, a threshold of 0.6 would result in smaller polygons with fewer false positives but more false negatives, while a threshold of 0.4 would produce larger polygons with more false positives but fewer false negatives. A threshold of 0.5 offers a balanced choice, but the ideal threshold depends on your specific use case.
+Add your model configuration and checkpoints to the `.env` file under `MODEL_CONFIG` and `MODEL_CHECKPOINT`. You can customize the predictions by adjusting the threshold, which determines the *'probability of mine'* at the model output for classifying a pixel as part of a mining area. For example, a threshold of `0.6` would result in smaller polygons with fewer false positives but more false negatives, while a threshold of `0.4` would produce larger polygons with more false positives but fewer false negatives. A threshold of `0.5` offers a balanced choice, but the ideal threshold depends on your specific use case.
+
 To generate a `.gpkg` dataset with predicted polygons for each year, run the script in one of the following modes:
 - **Regular Mode**: Predict on the full `.gpkg` dataset, which can take one to two days.
     ```bash
@@ -107,6 +109,7 @@ To generate a `.gpkg` dataset with predicted polygons for each year, run the scr
 
 ### 9. Postprocess the Predictions
 Run the post-processing script to refine the predictions. This step is performed on the CPU and typically takes only a few minutes. You can customize the behavior of the post-processing by adjusting the buffer size or disabling it entirely using the provided flags. Post-processed predictions can be accessed in `data/segmentation/data/segmentation/YOUR_YEAR/gpkg/`.
+
 There are different modes:
 - **Regular Mode**: Executes with a default buffer size of approximately 100 meters.  
   ```bash
@@ -125,6 +128,8 @@ There are different modes:
 
 ## Acknowledgements
 The authors gratefully acknowledge financial support from the Austrian National Bank (OeNB anniversary fund, project No. 18799) and the City of Vienna (Hochschuljubiläumsfonds, project No. H-457973/2023).
+
+The computations presented in this work were performed on the WUCluster, a facility supported by the Core Services of the Vienna University of Economics and Business.
 
 ## Contact
 For any inquiries, please contact: [philipp.sepin@wu.ac.at](mailto:philipp.sepin@wu.ac.at).
