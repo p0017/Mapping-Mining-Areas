@@ -292,7 +292,7 @@ def isnan(a):
     res2 = isnan(0)
 
     """
-    if type(a) == np.ndarray:
+    if type(a) == np.ndarray or type(a) == list:
         return pd.isnull(a).any()
     else:
         return pd.isnull(a)

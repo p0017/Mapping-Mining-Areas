@@ -108,20 +108,16 @@ To generate a `.gpkg` dataset with predicted polygons for each year, run the scr
     ```
 
 ### 9. Postprocess the Predictions
-Run the post-processing script to refine the predictions. This step is performed on the CPU and typically takes only a few minutes. You can customize the behavior of the post-processing by adjusting the buffer size or disabling it entirely using the provided flags. Post-processed predictions can be accessed in `data/segmentation/data/segmentation/YOUR_YEAR/gpkg/`.
+Run the post-processing script to refine the predictions. This step is performed on the CPU and typically takes only a few minutes. You can customize the behavior of the post-processing by adding a buffer and setting its size. Post-processed predictions can be accessed in `data/segmentation/data/segmentation/YOUR_YEAR/gpkg/`.
 
 There are different modes:
 - **Regular Mode**: Executes with a default buffer size of approximately 100 meters.  
   ```bash
   python3 2_gpkg_dataset_postprocessing.py
   ```
-- **Custom Buffer Size**: Specify a buffer size of your choice.  
+- **Using Buffer**: Specify a buffer size of your choice. In this case, using a buffer size of approximately 100 meters.
   ```bash
-  python3 2_gpkg_dataset_postprocessing.py --buffer_size=150
-  ```
-- **No Buffer**: Disables the buffer entirely.  
-  ```bash
-  python3 2_gpkg_dataset_postprocessing.py --use_buffer=False
+  python3 2_gpkg_dataset_postprocessing.py --buffer_size=100
   ```
 
 ---

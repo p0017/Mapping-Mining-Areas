@@ -8,15 +8,19 @@ from argparse import ArgumentParser
 #Further, it assigns the correct country name and iso3 code to every polygon.
 
 parser = ArgumentParser()
-parser.add_argument('-b', '--use_buffer', required=False, default=True, type=bool, help="Use buffer for postprocessing.")
-parser.add_argument('-s', '--buffer_size', required=False, default=100, type=float, help="Rough estimate of buffer size in meters.")
+parser.add_argument('-s', '--buffer_size', required=False, default=None, type=float, help="Rough estimate of buffer size in meters.")
 
 args = parser.parse_args()
-use_buffer = args.use_buffer
-buffer_size = args.buffer_size / 1e5
+use_buffer = args.buffer_size is not None
+if use_buffer:
+    buffer_size = args.buffer_size / 1e5
 # Optional buffer for more generous postprocessing and minimization of potential bias
-# 0.0005 corresponds to roughly 50 meters, increase for even more generous postprocessing
+# Increase for even more generous postprocessing
 
+if use_buffer: 
+    print('Using buffer of approx. {} meters.'.format(args.buffer_size))
+else:
+    print('Using no buffer.')
 
 global_datasets = {}
 
@@ -141,9 +145,9 @@ for year in global_datasets_postprocessed.keys():
 #Saving the postprocessed .gpkg datasets
 for year, dataset in global_datasets_postprocessed.items():
     if use_buffer:
-        dataset.to_file('./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed.gpkg'.format(year, year), driver='GPKG')
-        print('Postprocessed predictions with buffer saved to ./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed.gpkg'.format(year, year))
+        dataset.to_file('./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed_buffer.gpkg'.format(year, year), driver='GPKG')
+        print('Postprocessed predictions with buffer saved to ./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed_buffer.gpkg'.format(year, year))
 
     else:
-        dataset.to_file('./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed_nobuffer.gpkg'.format(year, year), driver='GPKG')
+        dataset.to_file('./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed.gpkg'.format(year, year), driver='GPKG')
         print('Postprocessed predictions without buffer saved to ./data/segmentation/{}/gpkg/global_mining_polygons_predicted_{}_postprocessed.gpkg'.format(year, year))
