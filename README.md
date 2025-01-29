@@ -12,16 +12,12 @@ This repository provides instructions for creating a panel dataset of tropical m
 </details>
 
 <p float="center">
-  <img src="resources/toka_mine.PNG" width="250" />
-  <img src="resources/toka_mine_prob.PNG" width="250" /> 
-  <img src="resources/toka_mine_pred.PNG" width="250" />
+  <img src="resources/pred_plot.png" width="750" />
 </p>
 
 **Toka Tindung** mine, one of the largest gold mines in Southeast Asia (Indonesia).
-- **Left**: Ground truth of the mining area in 2019.
-- **Center**: Model output showing the probability of mining presence.
-- **Right**: Predicted mining area for 2020.
 
+---
 
 ## Getting Started
 ### 1. Clone the repository
