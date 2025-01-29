@@ -11,11 +11,9 @@ This repository provides instructions for creating a panel dataset of tropical m
   The resulting dataset features improved accuracy and reduced noise from human errors, and can readily be extended to cover new locations and points in time as they become available. Our comprehensive dataset of mining areas can be used to assess local environmental, social, and economic impacts of mining activity in regions where conventional data is not available or incomplete. 
 </details>
 
-<p float="center">
+<p align="center">
   <img src="resources/pred_plot.png" width="750" />
 </p>
-
-**Toka Tindung** mine, one of the largest gold mines in Southeast Asia (Indonesia).
 
 ---
 
