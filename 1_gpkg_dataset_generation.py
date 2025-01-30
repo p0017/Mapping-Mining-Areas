@@ -25,9 +25,9 @@ It reads two polygon datasets for the corresponding polygon locations, fetches t
 and calculates its position and extent in the global coordinate system.
 The image datasets which are needed for inference first need to be generated using segmentation_dataset_generation.py.
 
-For this script, we used the Mask2Former by Cheng, et al.
-"Masked-attention mask transformer for universal image segmentation." Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. 2022.
-https://openaccess.thecvf.com/content/CVPR2022/html/Cheng_Masked-Attention_Mask_Transformer_for_Universal_Image_Segmentation_CVPR_2022_paper.html
+For this script, we used the SegFormer by Xie, et al.
+Xie, Enze, et al. "SegFormer: Simple and efficient design for semantic segmentation with transformers." Advances in neural information processing systems 34 (2021).
+https://proceedings.neurips.cc/paper/2021/hash/64f1f27bf1b4ec22924fd0acb550c235-Abstract.html
 
 We implemented it using MMSegmentation by OpenMMLab.
 https://github.com/open-mmlab/mmsegmentation
