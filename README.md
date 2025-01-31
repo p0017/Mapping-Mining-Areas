@@ -68,9 +68,14 @@ There are two modes:
 
 *Note:* The composite satellite images are selected based on their clarity, as stored in `data/segmentation/cloudfree_quads_info.csv`. Scripts to obtain this metadata are located in `scripts`.
 
+*Note:* The training and validation sets are also available via [kaggle](https://kaggle.com/datasets/dcb263e024a0bf098a697d291d55eaedb5f1549bfc3a29760e04d598603934b3).
+
 ### 5. Set up *MMSegmentation*
 Follow the installation guide for [*MMSegmentation*](https://mmsegmentation.readthedocs.io/en/main/get_started.html).
-Add the 2019 mining dataset you generated to the *MMSegmentation* training datasets as per these [instructions](https://mmsegmentation.readthedocs.io/en/main/advanced_guides/add_datasets.html).
+Add the 2019 mining dataset you generated to the *MMSegmentation* training datasets as per these [instructions](https://mmsegmentation.readthedocs.io/en/main/advanced_guides/add_datasets.html). Our model checkpoint and configs are available [here](https://owncloud.wu.ac.at/index.php/s/QkbGDSpbJMy3iEK) or via the following command.
+   ```bash
+   wget https://owncloud.wu.ac.at/index.php/s/QkbGDSpbJMy3iEK
+   ```
 
 ### 6. Install *NVIDIA CUDA*
 Processing and training relies on an *NVIDIA* GPU with *CUDA* support. Training benefits from two or more high-performance GPUs (such as the NVIDIA A30); a single GPU is sufficient for prediction.
