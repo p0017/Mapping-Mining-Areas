@@ -6,9 +6,8 @@ This repository provides instructions for creating a panel dataset of tropical m
   <summary>
     Sepin, P., Vashold, L., and Kuschnig N. (2025): Mapping Mining Areas in the Tropics from 2016–2024. R&R at Nature Sustainability.
   </summary>
-  Mining provides crucial materials for the global economy and the climate transition, but has potentially severe adverse environmental and social impacts. Currently, the analysis of such impacts is obstructed by the poor availability of data on mining activity — particularly in regions most affected. 
-  In this paper, we present a novel panel dataset of mining areas in the tropical belt from 2016 to 2024. We use a transformer-based segmentation model, trained on an extensive dataset of mining polygons from the literature, to automatically delineate mining areas in satellite imagery over time. 
-  The resulting dataset features improved accuracy and reduced noise from human errors, and can readily be extended to cover new locations and points in time as they become available. Our comprehensive dataset of mining areas can be used to assess local environmental, social, and economic impacts of mining activity in regions where conventional data is not available or incomplete. 
+  Mining provides crucial materials for the global economy and the climate transition, but can have severe environmental and social impacts. Current analyses of these impacts are limited by a lack of data on mining activity, particularly in the regions most affected. In this paper, we present a novel panel dataset mapping mining sites along the tropical belt from 2016 to 2024. Our approach uses a machine learning model, trained on over 25,000 mining polygons from the literature, to automatically segment mining areas in high-resolution (<5 m) satellite imagery. The dataset maps over 145,000 mining polygons covering an average area of 65,000 km² annually, with an accuracy of 87.7% and precision of 84.1%.
+  Our approach allows for accurate, precise, and consistent delineation, and can be scaled to new locations and periods. The dataset enables detailed analyses of local environmental, social, and economic impacts of mining in regions where conventional data is scarce or incomplete.
 </details>
 
 <p align="center">
@@ -105,7 +104,7 @@ To generate a `.gpkg` dataset with predicted polygons for each year, run the scr
 Run the post-processing script to refine the predictions. This step is performed on the CPU and typically takes only a few minutes. You can customize the behavior of the post-processing by adding a buffer and setting its size. Post-processed predictions can be accessed in `data/segmentation/data/segmentation/YOUR_YEAR/gpkg/`.
 
 There are different modes:
-- **Regular Mode**: Executes with a default buffer size of approximately 100 meters.  
+- **Regular Mode**: Executes without a buffer around mine polygons to avoid polygons popping up in isolated locations. 
   ```bash
   python3 2_gpkg_dataset_postprocessing.py
   ```
@@ -117,9 +116,5 @@ There are different modes:
 ---
 
 ## Acknowledgements
-The authors gratefully acknowledge financial support from the Austrian National Bank (OeNB anniversary fund, project No. 18799) and the City of Vienna (Hochschuljubiläumsfonds, project No. H-457973/2023).
-
-The computations presented in this work were performed on the WUCluster, a facility supported by the Core Services of the Vienna University of Economics and Business.
-
-## Contact
-For any inquiries, please contact: [philipp.sepin@wu.ac.at](mailto:philipp.sepin@wu.ac.at).
+The authors gratefully acknowledge financial support from the Austrian National Bank (OeNB anniversary fund, project No.~18799) and the City of Vienna (Hochschuljubiläumsfonds, project No.~H-457973/2023).
+Computations were performed on the WUCluster, a facility supported by the Core Services of the Vienna University of Economics and Business.
