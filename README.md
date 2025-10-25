@@ -1,13 +1,13 @@
 # Mapping Mining Areas in the Tropics
 
-This repository provides instructions for creating a panel dataset of tropical mining areas using state-of-the-art semantic segmentation techniques, following our [study](https://www.kuschnig.eu/files/wp_mapping-mines_wip.pdf):
+This repository provides instructions for creating a panel dataset of tropical mining areas using state-of-the-art semantic segmentation techniques, following our [study](https://doi.org/10.1038/s41893-025-01668-9):
 
 <details>
   <summary>
-    Sepin, P., Vashold, L., and Kuschnig N. (2025): Mapping Mining Areas in the Tropics from 2016–2024. R&R at Nature Sustainability.
+    Sepin, P., Vashold, L., and Kuschnig N. (2025): Mapping Mining Areas in the Tropics from 2016 to 2024. Nature Sustainability.
   </summary>
-  Mining provides crucial materials for the global economy and the climate transition, but can have severe environmental and social impacts. Current analyses of these impacts are limited by a lack of data on mining activity, particularly in the regions most affected. In this paper, we present a novel panel dataset mapping mining sites along the tropical belt from 2016 to 2024. Our approach uses a machine learning model, trained on over 25,000 mining polygons from the literature, to automatically segment mining areas in high-resolution (<5 m) satellite imagery. The dataset maps over 145,000 mining polygons covering an average area of 65,000 km² annually, with an accuracy of 87.7% and precision of 84.1%.
-  Our approach allows for accurate, precise, and consistent delineation, and can be scaled to new locations and periods. The dataset enables detailed analyses of local environmental, social, and economic impacts of mining in regions where conventional data is scarce or incomplete.
+  Mining provides crucial materials for the global economy and the energy transition but can have severe environmental and social impacts. Available analyses of these impacts are limited by a lack of data on mining activity, particularly in the regions most affected. Here we present a detailed panel dataset mapping mining sites along the tropical belt from 2016 to 2024. Our approach uses a machine learning model, trained on over 25,000 mining polygons from the literature, to automatically segment mining areas with high-resolution (<5 m) satellite imagery. The dataset maps over 147,000 mining polygons that cover an average area of 66,400 km2 annually, with an accuracy of 87.7% and precision of 84.1%. 
+    Our approach allows accurate, precise and consistent delineation and can be scaled to other locations and periods. The dataset enables detailed analyses of local environmental, societal and economic impacts of mining in regions where conventional data are scarce or incomplete.
 </details>
 
 <p align="center">
@@ -121,5 +121,4 @@ There are different modes:
 ---
 
 ## Acknowledgements
-The authors gratefully acknowledge financial support from the Austrian National Bank (OeNB anniversary fund, project No.~18799) and the City of Vienna (Hochschuljubiläumsfonds, project No.~H-457973/2023).
-Computations were performed on the WUCluster, a facility supported by the Core Services of the Vienna University of Economics and Business.
+We acknowledge financial support from the Oesterreichische Nationalbank (OeNB anniversary fund, project no. 18799; N.K., L.V. and P.S.) and the City of Vienna (Hochschuljubiläumsfonds, project no. H-457973/2023; L.V. and P.S.). Data access under the NICFI Satellite Data Program enabled this research. Computations were performed on the WUCluster, a facility supported by the Core Services of the Vienna University of Economics and Business.
