@@ -11,7 +11,7 @@ This repository provides instructions for creating a panel dataset of tropical m
 </details>
 
 <p align="center">
-  <img src="resources/pred_plot.png" width="750" style="background:white; padding:8px; border:1px solid white; border-radius:10px;" />
+  <img src="resources/pred_plot.png" width="750"/>
 </p>
 
 ---
