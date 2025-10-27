@@ -4,7 +4,7 @@ This repository provides instructions for creating a panel dataset of tropical m
 
 <details>
   <summary>
-    Sepin, P., Vashold, L., and Kuschnig N. (2025): Mapping Mining Areas in the Tropics from 2016 to 2024. Nature Sustainability, [doi](https://doi.org/10.1038/s41893-025-01668-9).
+    Sepin, P., Vashold, L., and Kuschnig N. (2025): Mapping Mining Areas in the Tropics from 2016 to 2024. Nature Sustainability, <a href="https://doi.org/10.1038/s41893-025-01668-9">doi: 10.1038/s41893-025-01668-9</a>.
   </summary>
   Mining provides crucial materials for the global economy and the energy transition but can have severe environmental and social impacts. Available analyses of these impacts are limited by a lack of data on mining activity, particularly in the regions most affected. Here we present a detailed panel dataset mapping mining sites along the tropical belt from 2016 to 2024. Our approach uses a machine learning model, trained on over 25,000 mining polygons from the literature, to automatically segment mining areas with high-resolution (<5 m) satellite imagery. The dataset maps over 147,000 mining polygons that cover an average area of 66,400 km2 annually, with an accuracy of 87.7% and precision of 84.1%. 
     Our approach allows accurate, precise and consistent delineation and can be scaled to other locations and periods. The dataset enables detailed analyses of local environmental, societal and economic impacts of mining in regions where conventional data are scarce or incomplete.
